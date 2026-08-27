@@ -12,6 +12,7 @@ class GameAudio(context: Context) {
     private var musicVolume = .22f
     private var lastWave = 1
     private var lastBossFight = false
+    private var released = false
     private val pool = SoundPool.Builder().setMaxStreams(8).setAudioAttributes(
         AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_GAME).setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build()
     ).build()
@@ -35,22 +36,31 @@ class GameAudio(context: Context) {
 
     private fun stem(context: Context, resource: Int): MediaPlayer? = MediaPlayer.create(context, resource)?.apply { isLooping = true }
     private fun each(action: (MediaPlayer) -> Unit) { listOfNotNull(baseMusic, tensionMusic, bossMusic).forEach(action) }
-    fun startMusic() { runCatching { each { if (!it.isPlaying) it.start() } } }
-    fun pauseMusic() { runCatching { each { if (it.isPlaying) it.pause() } } }
-    fun setSoundVolume(value: Float) { soundVolume = value.coerceIn(0f, 1f) }
-    fun setMusicVolume(value: Float) { musicVolume = value.coerceIn(0f, 1f); setIntensity(lastWave, lastBossFight) }
+    fun startMusic() {
+        if (released) return
+        runCatching { each { if (!it.isPlaying) it.start() } }
+    }
+    fun pauseMusic() {
+        if (released) return
+        runCatching { each { if (it.isPlaying) it.pause() } }
+    }
+    fun setSoundVolume(value: Float) { if (!released) soundVolume = value.coerceIn(0f, 1f) }
+    fun setMusicVolume(value: Float) { if (!released) { musicVolume = value.coerceIn(0f, 1f); setIntensity(lastWave, lastBossFight) } }
     fun setIntensity(wave: Int, bossFight: Boolean) {
+        if (released) return
         lastWave = wave; lastBossFight = bossFight
         val progress = (wave.coerceAtMost(300) / 300f)
         val base = (musicVolume * (1f - progress * .18f)).coerceAtLeast(0f)
         val tension = musicVolume * (.06f + progress * .42f)
         val bossGain = if (bossFight) musicVolume * .72f else 0f
-        baseMusic?.setVolume(base, base)
-        tensionMusic?.setVolume(tension, tension)
-        bossMusic?.setVolume(bossGain, bossGain)
-        runCatching { bossMusic?.let { it.setPlaybackParams(it.playbackParams.setSpeed(if (bossFight) 1.04f else 1f)) } }
+        runCatching {
+            baseMusic?.setVolume(base, base)
+            tensionMusic?.setVolume(tension, tension)
+            bossMusic?.setVolume(bossGain, bossGain)
+            bossMusic?.let { it.setPlaybackParams(it.playbackParams.setSpeed(if (bossFight) 1.04f else 1f)) }
+        }
     }
-    private fun play(id: Int, amount: Float, rate: Float = 1f) = pool.play(id, amount * soundVolume, amount * soundVolume, 1, 0, rate)
+    private fun play(id: Int, amount: Float, rate: Float = 1f): Int = if (released) 0 else pool.play(id, amount * soundVolume, amount * soundVolume, 1, 0, rate)
     fun playHit() = play(hit, 0.45f)
     fun playFire() = play(fire, 0.55f)
     fun playBoss() = play(boss, .8f, .8f)
@@ -65,5 +75,10 @@ class GameAudio(context: Context) {
     fun playLand() = play(land, .25f, .9f)
     fun playFall() = play(fall, .5f, .8f)
     fun playDoubleJump() = play(doubleJump, .35f, 1.1f)
-    fun release() { runCatching { each { it.release() } }; pool.release() }
+    fun release() {
+        if (released) return
+        released = true
+        runCatching { each { it.release() } }
+        runCatching { pool.release() }
+    }
 }

@@ -144,7 +144,7 @@ class GameEngine(private val random: Random = Random(77)) {
 
     fun update(dtRaw: Float) {
         if (phase == EnginePhase.PAUSED || phase == EnginePhase.DEFEATED) return
-        val dt = dtRaw.coerceIn(0f, .05f)
+        val dt = if (dtRaw.isFinite()) dtRaw.coerceIn(0f, .05f) else 0f
         elapsed += dt
         messageTimer = max(0f, messageTimer - dt)
         screenShake = max(0f, screenShake - dt * 1.7f)

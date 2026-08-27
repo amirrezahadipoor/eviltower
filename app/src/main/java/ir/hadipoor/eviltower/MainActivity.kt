@@ -12,14 +12,19 @@ import ir.hadipoor.eviltower.ui.GameViewModel
 
 class MainActivity : ComponentActivity() {
     private val viewModel: GameViewModel by viewModels()
-    private lateinit var bazaarBilling: BazaarBillingProvider
+    private var bazaarBilling: BazaarBillingProvider? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         WindowCompat.setDecorFitsSystemWindows(window, false)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         bazaarBilling = BazaarBillingProvider(this)
-        bazaarBilling.connect()
+        runCatching { bazaarBilling?.connect() }
         setContent { EvilTowerApp(viewModel) }
     }
-    override fun onDestroy() { bazaarBilling.disconnect(); viewModel.release(); super.onDestroy() }
+    override fun onDestroy() {
+        runCatching { bazaarBilling?.disconnect() }
+        bazaarBilling = null
+        viewModel.release()
+        super.onDestroy()
+    }
 }

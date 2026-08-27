@@ -32,6 +32,7 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
     private val engine = GameEngine()
     private var loop: Job? = null
     private var didSave = false
+    private var released = false
 
     init {
         audio.startMusic()
@@ -46,6 +47,7 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun startRun() {
+        if (released) return
         val p = profile.value
         engine.startRun(startingGold = 520 + p.startingGoldBonus, personalBest = p.bestWave, arcane = p.arcaneUnlocked, lowGraphics = p.lowGraphics, skin = if (p.emberSkinUnlocked) 1 else 0)
         snapshot.value = engine.snapshot()
@@ -120,6 +122,12 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
         didSave = true
         viewModelScope.launch { repository.saveRun(snapshot.value) }
     }
-    fun release() { loop?.cancel(); audio.release() }
+    fun release() {
+        if (released) return
+        released = true
+        loop?.cancel()
+        loop = null
+        audio.release()
+    }
     override fun onCleared() { release(); super.onCleared() }
 }
