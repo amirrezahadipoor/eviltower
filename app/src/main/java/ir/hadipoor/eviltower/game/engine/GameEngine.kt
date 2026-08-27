@@ -167,7 +167,7 @@ class GameEngine(private val random: Random = Random(77)) {
         updateTowers(dt)
         projectiles.forEachIndexed { index, projectile -> projectiles[index] = projectile.copy(progress = projectile.progress + dt * 5.5f) }
         projectiles.removeAll { it.progress >= 1f }
-        if (spawned >= (currentPlan?.units?.size ?: 0) && enemies.isEmpty() && projectiles.isEmpty()) {
+        if (phase == EnginePhase.ACTIVE && spawned >= (currentPlan?.units?.size ?: 0) && enemies.isEmpty() && projectiles.isEmpty()) {
             clearWave()
         }
     }

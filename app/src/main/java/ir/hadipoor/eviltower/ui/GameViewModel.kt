@@ -33,7 +33,10 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
     private var loop: Job? = null
     private var didSave = false
 
-    init { viewModelScope.launch { delay(1_200); screen.value = AppScreen.MENU } }
+    init {
+        audio.startMusic()
+        viewModelScope.launch { delay(1_200); screen.value = AppScreen.MENU }
+    }
 
     fun startRun() {
         val p = profile.value
@@ -70,7 +73,10 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
     fun buyArcane() { viewModelScope.launch { repository.buyArcane(); notice.value = "برج جادوی اهریمنی باز شد" } }
     fun buyGoldBonus() { viewModelScope.launch { repository.buyStartingGold(); notice.value = "۸۰ سکه‌ی شروع اضافه شد" } }
     fun setSound(value: Boolean) { viewModelScope.launch { repository.setSound(value) } }
-    fun setMusic(value: Boolean) { viewModelScope.launch { repository.setMusic(value) } }
+    fun setMusic(value: Boolean) {
+        if (value) audio.startMusic() else audio.pauseMusic()
+        viewModelScope.launch { repository.setMusic(value) }
+    }
     fun setVibration(value: Boolean) { viewModelScope.launch { repository.setVibration(value) } }
     fun setLowGraphics(value: Boolean) { viewModelScope.launch { repository.setLowGraphics(value) } }
     fun clearNotice() { notice.value = null }
