@@ -13,6 +13,7 @@ import ir.hadipoor.eviltower.game.model.Tower
 import ir.hadipoor.eviltower.game.model.TowerType
 import ir.hadipoor.eviltower.game.model.WavePlan
 import ir.hadipoor.eviltower.game.model.WaveUnit
+import kotlin.math.atan2
 import kotlin.math.ceil
 import kotlin.math.max
 import kotlin.math.min
@@ -290,12 +291,12 @@ class GameEngine(private val random: Random = Random(77)) {
             val tower = towers[index]
             val cooldown = max(0f, tower.cooldown - dt)
             if (tower.webbed > 0f || cooldown > 0f) {
-                towers[index] = tower.copy(cooldown = cooldown, upgradePulse = max(0f, tower.upgradePulse - dt * 2f)); continue
+                towers[index] = tower.copy(cooldown = cooldown, upgradePulse = max(0f, tower.upgradePulse - dt * 2f), attackPulse = max(0f, tower.attackPulse - dt * 8f)); continue
             }
             val origin = Balance.PLOTS[tower.plot]
             val target = targetFor(tower, origin)
             if (target == null) {
-                towers[index] = tower.copy(cooldown = cooldown, upgradePulse = max(0f, tower.upgradePulse - dt * 2f)); continue
+                towers[index] = tower.copy(cooldown = cooldown, upgradePulse = max(0f, tower.upgradePulse - dt * 2f), attackPulse = max(0f, tower.attackPulse - dt * 8f)); continue
             }
             val targetPoint = positionOf(target.progress)
             projectiles += projectilePool.obtain().copy(id = nextId++, towerType = tower.type, from = origin, to = targetPoint, progress = 0f)
@@ -308,7 +309,7 @@ class GameEngine(private val random: Random = Random(77)) {
                         damageEnemy(chain.id, Balance.towerDamage(tower) * .42f, tower.type, chainPoint, tower.level, false)
                     }
             }
-            towers[index] = tower.copy(cooldown = Balance.towerInterval(tower), totalDamage = tower.totalDamage + Balance.towerDamage(tower).toLong(), upgradePulse = max(0f, tower.upgradePulse - dt * 2f))
+            towers[index] = tower.copy(cooldown = Balance.towerInterval(tower), totalDamage = tower.totalDamage + Balance.towerDamage(tower).toLong(), upgradePulse = max(0f, tower.upgradePulse - dt * 2f), attackPulse = 1f, aimAngle = atan2(targetPoint.y - origin.y, targetPoint.x - origin.x))
         }
     }
 

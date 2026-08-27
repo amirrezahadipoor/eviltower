@@ -53,6 +53,8 @@ data class Tower(
     val totalDamage: Long = 0,
     val upgradePulse: Float = 0f,
     val webbed: Float = 0f,
+    val aimAngle: Float = 0f,
+    val attackPulse: Float = 0f,
 )
 
 data class Enemy(

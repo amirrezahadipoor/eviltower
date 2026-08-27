@@ -174,17 +174,18 @@ private fun DrawScope.drawTower(tower: Tower, center: Offset, time: Float, skin:
         TowerType.LIGHTNING -> Color(0xFFFFC857)
         else -> Color(0xFFFF8C69)
     } else tower.type.color
-    val pulse = 1f + (tower.upgradePulse * .16f)
+    val pulse = 1f + (tower.upgradePulse * .16f) + tower.attackPulse * .08f
     val sway = SpriteAnimation.sample(SpriteState.IDLE, time, tower.id).tilt * 2f
+    val weapon = Offset(cos(tower.aimAngle) * (18f + sway), sin(tower.aimAngle) * (18f + sway))
     drawCircle(color.copy(alpha = .10f + tier * .012f), (23f + tier * 2f) * pulse, center)
     drawCircle(StoneDark, 16f * pulse, center.copy(y = center.y + 8f))
     round(color.copy(alpha = .75f), Rect(center.x - (8 + tier) * pulse, center.y - 13 * pulse, center.x + (8 + tier) * pulse, center.y + 12 * pulse), 4f)
     when (tower.type) {
         TowerType.ARCHER, TowerType.SKY_ARCHER -> {
-            line(center.copy(x = center.x - 15), center.copy(x = center.x + 15, y = center.y + sway), color, 3f)
+            line(center, center + weapon, color, 3f)
             drawArc(color, 205f, 130f, false, topLeft = Offset(center.x - 13, center.y - 15), size = androidx.compose.ui.geometry.Size(26f, 25f), style = Stroke(3f))
         }
-        TowerType.CANNON -> { drawCircle(color, (10 + tier).toFloat(), center.copy(y = center.y - 8)); line(center.copy(y = center.y - 8), center.copy(x = center.x + 20, y = center.y - 17 + sway), color, 6f, StrokeCap.Round) }
+        TowerType.CANNON -> { drawCircle(color, (10 + tier).toFloat(), center.copy(y = center.y - 8)); line(center.copy(y = center.y - 8), center.copy(x = center.x + weapon.x, y = center.y - 8 + weapon.y), color, 6f, StrokeCap.Round) }
         TowerType.FROST -> { drawCircle(Color(0xFFDBF8FF), (8 + tier).toFloat(), center.copy(y = center.y - 7)); repeat(4) { i -> line(center.copy(y = center.y - 8), center + Offset(cos(i * 1.57f) * 18, sin(i * 1.57f) * 18), color, 2f) } }
         TowerType.FIRE -> { val flame = Path().apply { moveTo(center.x, center.y - 22); quadraticTo(center.x - 14, center.y - 5, center.x, center.y + 3); quadraticTo(center.x + 14, center.y - 5, center.x, center.y - 22); close() }; drawPath(flame, color); drawCircle(Gold, 4f, center.copy(y = center.y - 9)) }
         TowerType.LIGHTNING -> { drawCircle(color, 7f + tier, center.copy(y = center.y - 9)); line(center.copy(x = center.x - 5, y = center.y - 16), center.copy(x = center.x + 4, y = center.y + 1), color, 4f); line(center.copy(x = center.x + 4, y = center.y + 1), center.copy(x = center.x - 5, y = center.y + 10), color, 4f) }
