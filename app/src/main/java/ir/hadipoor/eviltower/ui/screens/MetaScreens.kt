@@ -1,5 +1,10 @@
 package ir.hadipoor.eviltower.ui.screens
 
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -20,6 +25,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -149,7 +155,11 @@ fun ResultScreen(snapshot: GameSnapshot, profile: ProfileData, vm: GameViewModel
             ResultLine("مدت دفاع", "${fa(snapshot.runSeconds)} ثانیه", Color.White)
         } }
         Spacer(Modifier.height(22.dp))
-        if (snapshot.bestWave >= profile.bestWave && snapshot.bestWave > 0) Text("رکورد جدید!", color = Gold, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+        if (snapshot.newRecord) {
+            val transition = rememberInfiniteTransition(label = "record")
+            val pulse by transition.animateFloat(.94f, 1.08f, infiniteRepeatable(tween(500), RepeatMode.Reverse), label = "record-pulse")
+            Text("رکورد جدید!", color = Gold, fontSize = 27.sp, fontWeight = FontWeight.Bold, modifier = Modifier.graphicsLayer { scaleX = pulse; scaleY = pulse })
+        }
         Spacer(Modifier.weight(1f))
         EvilButton("دوباره تلاش کن", Modifier.fillMaxWidth(), Ember) { vm.startRun() }
         Spacer(Modifier.height(10.dp)); EvilButton("منوی اصلی", Modifier.fillMaxWidth(), PanelLight) { vm.goMenu() }

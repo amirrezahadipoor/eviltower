@@ -27,6 +27,7 @@ class GameEngine(private val random: Random = Random(77)) {
     private var phase = EnginePhase.PREP
     private var wave = 1
     private var bestWave = 0
+    private var startingBest = 0
     private var gold = 520
     private var gems = 0
     private var coreHp = Balance.MAX_CORE_HP
@@ -58,7 +59,7 @@ class GameEngine(private val random: Random = Random(77)) {
     private val enemyPool = ObjectPool<Enemy>(factory = { Enemy(0, EnemyType.GRUNT, 0f, 0f, 1f, false) }, initialSize = 64)
 
     fun startRun(startingGold: Int = 520, personalBest: Int = 0, arcane: Boolean = false) {
-        phase = EnginePhase.PREP; wave = 1; bestWave = personalBest
+        phase = EnginePhase.PREP; wave = 1; bestWave = personalBest; startingBest = personalBest
         gold = startingGold; gems = 0; coreHp = Balance.MAX_CORE_HP
         enemiesDefeated = 0; goldEarned = 0; elapsed = 0f
         prepRemaining = Balance.PREP_SECONDS; spawnTimer = 0f; spawned = 0; combo = 0; nextId = 1
@@ -366,6 +367,7 @@ class GameEngine(private val random: Random = Random(77)) {
             towers = towers.toList(), enemies = enemies.toList(), projectiles = projectiles.toList(),
             floatingTexts = floatingTexts.toList(), particles = particles.toList(), combo = combo,
             message = message.takeIf { messageTimer > 0f },
+            newRecord = bestWave > startingBest,
         )
     }
 

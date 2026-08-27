@@ -119,4 +119,5 @@ data class GameSnapshot(
     val particles: List<Particle> = emptyList(),
     val combo: Int = 0,
     val message: String? = null,
+    val newRecord: Boolean = false,
 )
