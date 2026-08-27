@@ -103,6 +103,7 @@ data class GameSnapshot(
     val bossName: String? = null,
     val bossHp: Float = 0f,
     val bossMaxHp: Float = 0f,
+    val abilityRemaining: Float = 0f,
     val selectedPlot: Int? = null,
     val towers: List<Tower> = emptyList(),
     val enemies: List<Enemy> = emptyList(),

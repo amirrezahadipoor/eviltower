@@ -1,0 +1,192 @@
+package ir.hadipoor.eviltower.ui.screens
+
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.unit.IntSize
+import ir.hadipoor.eviltower.game.engine.Balance
+import ir.hadipoor.eviltower.game.model.Enemy
+import ir.hadipoor.eviltower.game.model.EnemyType
+import ir.hadipoor.eviltower.game.model.GameSnapshot
+import ir.hadipoor.eviltower.game.model.Point
+import ir.hadipoor.eviltower.game.model.Tower
+import ir.hadipoor.eviltower.game.model.TowerType
+import ir.hadipoor.eviltower.ui.theme.Acid
+import ir.hadipoor.eviltower.ui.theme.Danger
+import ir.hadipoor.eviltower.ui.theme.Ember
+import ir.hadipoor.eviltower.ui.theme.Gold
+import ir.hadipoor.eviltower.ui.theme.Stone
+import ir.hadipoor.eviltower.ui.theme.StoneDark
+import kotlin.math.cos
+import kotlin.math.sin
+
+@Composable
+fun GameCanvas(snapshot: GameSnapshot, onPlotTap: (Int) -> Unit, modifier: Modifier = Modifier) {
+    Canvas(
+        modifier = modifier.fillMaxSize().pointerInput(snapshot.towers, snapshot.selectedPlot) {
+            detectTapGestures { tap ->
+                val plot = Balance.PLOTS.indices.minByOrNull { index ->
+                    val p = Balance.PLOTS[index]
+                    val dx = tap.x / size.width - p.x
+                    val dy = tap.y / size.height - p.y
+                    dx * dx + dy * dy
+                } ?: return@detectTapGestures
+                val p = Balance.PLOTS[plot]
+                val dx = tap.x / size.width - p.x
+                val dy = tap.y / size.height - p.y
+                if (dx * dx + dy * dy < .055f * .055f) onPlotTap(plot)
+            }
+        },
+    ) {
+        drawRect(Brush.verticalGradient(listOf(Color(0xFF181227), Color(0xFF090711))))
+        drawStars()
+        drawTowerSource(snapshot.wave)
+        drawRoad()
+        drawCore()
+        drawPlots(snapshot)
+        drawEnemies(snapshot)
+        drawProjectiles(snapshot)
+        drawEffects(snapshot)
+    }
+}
+
+private fun DrawScope.pos(point: Point): Offset = Offset(point.x * size.width, point.y * size.height)
+private fun DrawScope.pos(x: Float, y: Float): Offset = Offset(x * size.width, y * size.height)
+
+private fun DrawScope.drawStars() {
+    val stars = listOf(.08f to .12f, .21f to .08f, .31f to .20f, .49f to .08f, .76f to .11f, .89f to .25f, .15f to .32f, .58f to .26f, .94f to .46f)
+    stars.forEachIndexed { index, pair -> drawCircle(Color(0x88D7C8F0), 1.2f + index % 2, pos(pair.first, pair.second)) }
+}
+
+private fun DrawScope.drawTowerSource(wave: Int) {
+    val p = pos(.92f, .16f)
+    val scale = (1f + (wave / 50) * .025f).coerceAtMost(1.35f)
+    val glow = 22f * scale + (wave % 20)
+    drawCircle(Color(0x3328E59A), glow, p)
+    drawCircle(Color(0x4428E59A), glow * .63f, p)
+    val tower = Path().apply {
+        moveTo(p.x - 34 * scale, p.y + 52 * scale); lineTo(p.x - 25 * scale, p.y - 42 * scale)
+        lineTo(p.x - 8 * scale, p.y - 56 * scale); lineTo(p.x + 3 * scale, p.y - 44 * scale)
+        lineTo(p.x + 24 * scale, p.y - 50 * scale); lineTo(p.x + 35 * scale, p.y + 52 * scale); close()
+    }
+    drawPath(tower, Color(0xFF321E44)); drawPath(tower, Color(0xFF6E365C), style = Stroke(2.5f))
+    drawLine(pos(.92f, .07f), pos(.92f, .22f), Color(0xFF98E36E), 5f, StrokeCap.Round)
+    drawCircle(Color(0xFFB9FF83), 7f * scale, p.copy(y = p.y - 8 * scale))
+    drawCircle(Color(0xFF1B122A), 2.5f, p.copy(y = p.y - 8 * scale))
+}
+
+private fun DrawScope.drawRoad() {
+    val points = Balance.PATH.map(::pos)
+    for (i in 0 until points.lastIndex) {
+        drawLine(points[i], points[i + 1], Color(0x552F283A), 42f, StrokeCap.Round)
+        drawLine(points[i], points[i + 1], Color(0xFF51404D), 30f, StrokeCap.Round)
+        drawLine(points[i], points[i + 1], Color(0xFF73555A), 22f, StrokeCap.Round)
+    }
+    points.forEach { drawCircle(Color(0x226B4F5A), 18f, it) }
+}
+
+private fun DrawScope.drawCore() {
+    val p = pos(Balance.PATH.last())
+    drawCircle(Color(0x334C8DFF), 42f, p)
+    drawCircle(Color(0xFF293C69), 27f, p)
+    drawCircle(Color(0xFF69B6FF), 17f, p)
+    drawCircle(Color(0xFFD9F4FF), 6f, p)
+    drawLine(p.copy(x = p.x - 34), p.copy(x = p.x + 34), Color(0xFF91CEFF), 3f)
+    drawLine(p.copy(y = p.y - 34), p.copy(y = p.y + 34), Color(0xFF91CEFF), 3f)
+}
+
+private fun DrawScope.drawPlots(snapshot: GameSnapshot) {
+    Balance.PLOTS.forEachIndexed { index, point ->
+        val center = pos(point)
+        val selected = snapshot.selectedPlot == index
+        drawCircle(if (selected) Color(0x5570D6FF) else Color(0x33241C34), 25f, center)
+        drawCircle(if (selected) Color(0xFF70D6FF) else Color(0xFF6E536B), 20f, center, style = Stroke(2f))
+        val tower = snapshot.towers.firstOrNull { it.plot == index }
+        if (tower == null) {
+            drawLine(center.copy(x = center.x - 7), center.copy(x = center.x + 7), Color(0xFFB9A4B7), 2f)
+            drawLine(center.copy(y = center.y - 7), center.copy(y = center.y + 7), Color(0xFFB9A4B7), 2f)
+        } else drawTower(tower, center)
+    }
+}
+
+private fun DrawScope.drawTower(tower: Tower, center: Offset) {
+    val tier = (tower.level - 1) / 10
+    val detail = (tower.level - 1) % 10
+    val color = tower.type.color
+    val pulse = 1f + (tower.upgradePulse * .16f)
+    drawCircle(color.copy(alpha = .10f + tier * .012f), (23f + tier * 2f) * pulse, center)
+    drawCircle(StoneDark, 16f * pulse, center.copy(y = center.y + 8f))
+    round(color.copy(alpha = .75f), Rect(center.x - (8 + tier) * pulse, center.y - 13 * pulse, center.x + (8 + tier) * pulse, center.y + 12 * pulse), 4f)
+    when (tower.type) {
+        TowerType.ARCHER, TowerType.SKY_ARCHER -> {
+            drawLine(center.copy(x = center.x - 15), center.copy(x = center.x + 15), color, 3f)
+            drawArc(color, 205f, 130f, false, topLeft = Offset(center.x - 13, center.y - 15), size = androidx.compose.ui.geometry.Size(26f, 25f), style = Stroke(3f))
+        }
+        TowerType.CANNON -> { drawCircle(color, (10 + tier).toFloat(), center.copy(y = center.y - 8)); drawLine(center.copy(y = center.y - 8), center.copy(x = center.x + 20, y = center.y - 17), color, 6f, StrokeCap.Round) }
+        TowerType.FROST -> { drawCircle(Color(0xFFDBF8FF), (8 + tier).toFloat(), center.copy(y = center.y - 7)); repeat(4) { i -> drawLine(center.copy(y = center.y - 8), center + Offset(cos(i * 1.57f) * 18, sin(i * 1.57f) * 18), color, 2f) } }
+        TowerType.FIRE -> { val flame = Path().apply { moveTo(center.x, center.y - 22); quadraticTo(center.x - 14, center.y - 5, center.x, center.y + 3); quadraticTo(center.x + 14, center.y - 5, center.x, center.y - 22); close() }; drawPath(flame, color); drawCircle(Gold, 4f, center.copy(y = center.y - 9)) }
+        TowerType.LIGHTNING -> { drawCircle(color, 7f + tier, center.copy(y = center.y - 9)); drawLine(center.copy(x = center.x - 5, y = center.y - 16), center.copy(x = center.x + 4, y = center.y + 1), color, 4f); drawLine(center.copy(x = center.x + 4, y = center.y + 1), center.copy(x = center.x - 5, y = center.y + 10), color, 4f) }
+        TowerType.ARCANE -> { drawCircle(color, 8f + tier, center.copy(y = center.y - 8)); drawCircle(Color.White, 3f, center.copy(y = center.y - 8)); drawLine(center.copy(x = center.x - 13, y = center.y + 4), center.copy(x = center.x + 13, y = center.y + 4), color, 3f) }
+    }
+    repeat(tier.coerceAtMost(6)) { i -> drawCircle(Gold.copy(alpha = .7f), 2.2f, center + Offset(-10f + i * 4f, 20f)) }
+    repeat(detail / 3) { i -> drawCircle(Color.White.copy(alpha = .45f), 1.5f, center + Offset(-8f + i * 8f, -24f)) }
+}
+
+private fun DrawScope.drawEnemies(snapshot: GameSnapshot) {
+    snapshot.enemies.forEach { enemy ->
+        val p = pos(positionOf(enemy.progress))
+        val radius = when (enemy.type) { EnemyType.BOSS -> 24f; EnemyType.MINI_BOSS -> 18f; EnemyType.OGRE -> 15f; else -> 10f }
+        if (enemy.hitFlash > 0f) drawCircle(Color.White.copy(alpha = .7f), radius + 5f, p)
+        when (enemy.type) {
+            EnemyType.BAT -> { drawCircle(Color(0xFF8E65D1), radius, p); drawLine(p.copy(x = p.x - 8, y = p.y - 2), p.copy(x = p.x - 22, y = p.y - 12), Color(0xFFC19BFF), 5f); drawLine(p.copy(x = p.x + 8, y = p.y - 2), p.copy(x = p.x + 22, y = p.y - 12), Color(0xFFC19BFF), 5f) }
+            EnemyType.WOLF -> { drawOval(Color(0xFF5A477F), Rect(p.x - 14, p.y - 8, p.x + 14, p.y + 8)); drawCircle(Color(0xFFB8A3FF), 3f, p.copy(x = p.x + 8, y = p.y - 2)) }
+            EnemyType.SKELETON -> { drawCircle(Color(0xFFE5D6B8), radius, p); drawCircle(Color(0xFF2A1E2E), 3f, p.copy(x = p.x - 4, y = p.y - 2)); drawCircle(Color(0xFF2A1E2E), 3f, p.copy(x = p.x + 4, y = p.y - 2)); drawLine(p.copy(y = p.y + 8), p.copy(y = p.y + 19), Color(0xFFE5D6B8), 5f) }
+            EnemyType.OGRE -> { round(Color(0xFF6E806C), Rect(p.x - 15, p.y - 16, p.x + 15, p.y + 16), 8f); drawCircle(Color(0xFFFFC857), 3f, p.copy(x = p.x - 6, y = p.y - 4)); drawCircle(Color(0xFFFFC857), 3f, p.copy(x = p.x + 6, y = p.y - 4)) }
+            EnemyType.WRAITH -> { drawCircle(Color(0xFF7B5BA7).copy(alpha = .65f), radius + 4f, p); drawCircle(Color(0xFFD9B8FF), 3f, p.copy(x = p.x + 5, y = p.y - 2)) }
+            EnemyType.IMP -> { drawCircle(Color(0xFFE95645), radius, p); drawLine(p.copy(x = p.x - 5, y = p.y - 7), p.copy(x = p.x - 11, y = p.y - 16), Color(0xFFFFB347), 3f); drawLine(p.copy(x = p.x + 5, y = p.y - 7), p.copy(x = p.x + 11, y = p.y - 16), Color(0xFFFFB347), 3f) }
+            EnemyType.MINI_BOSS, EnemyType.BOSS -> { drawCircle(Danger.copy(alpha = .18f), radius + 10f, p); drawCircle(if (enemy.type == EnemyType.BOSS) Color(0xFFB52F5B) else Color(0xFF8E493D), radius, p); drawCircle(Gold, 4f, p.copy(y = p.y - 3)); drawLine(p.copy(x = p.x - radius, y = p.y - radius - 4), p.copy(x = p.x - 5, y = p.y - radius - 14), Gold, 3f); drawLine(p.copy(x = p.x + radius, y = p.y - radius - 4), p.copy(x = p.x + 5, y = p.y - radius - 14), Gold, 3f) }
+            else -> { drawCircle(if (enemy.elite) Color(0xFFB9455F) else Acid, radius, p); drawCircle(Color(0xFF211828), 3f, p.copy(x = p.x + 4, y = p.y - 2)) }
+        }
+        round(Color(0xAA0A0710), Rect(p.x - radius, p.y - radius - 10, p.x + radius, p.y - radius - 6), 2f)
+        round(if (enemy.type == EnemyType.BOSS) Danger else Color(0xFF7CE38B), Rect(p.x - radius, p.y - radius - 10, p.x - radius + 2 * radius * (enemy.hp / enemy.maxHp).coerceIn(0f, 1f), p.y - radius - 6), 2f)
+    }
+}
+
+private fun DrawScope.drawProjectiles(snapshot: GameSnapshot) {
+    snapshot.projectiles.forEach { projectile ->
+        val p = Offset(projectile.from.x + (projectile.to.x - projectile.from.x) * projectile.progress, projectile.from.y + (projectile.to.y - projectile.from.y) * projectile.progress)
+        val color = projectile.towerType.color
+        drawCircle(color.copy(alpha = .18f), 12f, pos(p.x, p.y)); drawCircle(color, 4f, pos(p.x, p.y))
+    }
+}
+
+private fun DrawScope.drawEffects(snapshot: GameSnapshot) {
+    snapshot.particles.forEach { particle ->
+        val p = pos(particle.at); val alpha = (1f - particle.age / .75f).coerceIn(0f, 1f)
+        val angle = particle.id * .77f; val distance = particle.age * 55f
+        drawCircle(particle.color.copy(alpha = alpha), (3f * particle.size) * alpha, p + Offset(cos(angle) * distance, sin(angle) * distance))
+    }
+}
+
+private fun DrawScope.round(color: Color, rect: Rect, radius: Float) {
+    drawRoundRect(color, topLeft = rect.topLeft, size = rect.size, cornerRadius = androidx.compose.ui.geometry.CornerRadius(radius, radius))
+}
+
+private fun positionOf(progress: Float): Point {
+    val value = progress.coerceIn(0f, .9999f) * (Balance.PATH.size - 1)
+    val index = value.toInt().coerceIn(0, Balance.PATH.size - 2)
+    val t = value - index
+    val a = Balance.PATH[index]; val b = Balance.PATH[index + 1]
+    return Point(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t)
+}

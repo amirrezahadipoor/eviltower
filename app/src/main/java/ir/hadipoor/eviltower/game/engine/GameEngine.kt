@@ -315,6 +315,7 @@ class GameEngine(private val random: Random = Random(77)) {
             runSeconds = elapsed.toInt(), prepRemaining = prepRemaining.coerceAtLeast(0f),
             spawned = spawned, totalToSpawn = currentPlan?.units?.size ?: 0, isEndless = wave >= 301,
             bossName = boss?.bossName, bossHp = boss?.hp ?: 0f, bossMaxHp = boss?.maxHp ?: 0f,
+            abilityRemaining = abilityCooldown,
             selectedPlot = selectedPlot, towers = towers.toList(), enemies = enemies.toList(),
             projectiles = projectiles.toList(), floatingTexts = floatingTexts.toList(), particles = particles.toList(),
             combo = combo, message = if (endlessMessageTimer > 0f) "شما وارد فاز بی‌پایان شده‌اید" else null,
