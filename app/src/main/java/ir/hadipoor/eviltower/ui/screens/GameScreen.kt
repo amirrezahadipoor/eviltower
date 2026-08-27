@@ -11,6 +11,7 @@ import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -89,7 +90,7 @@ fun GameScreen(vm: GameViewModel) {
 }
 
 @Composable
-private fun BossIntro(message: String) {
+private fun BoxScope.BossIntro(message: String) {
     val transition = rememberInfiniteTransition(label = "boss-intro")
     val pulse by transition.animateFloat(.92f, 1.08f, infiniteRepeatable(tween(460), RepeatMode.Reverse), label = "boss-pulse")
     Column(Modifier.align(Alignment.Center).graphicsLayer { scaleX = pulse; scaleY = pulse }.background(Color(0xEE35152F), RoundedCornerShape(22.dp)).padding(horizontal = 28.dp, vertical = 18.dp), horizontalAlignment = Alignment.CenterHorizontally) {

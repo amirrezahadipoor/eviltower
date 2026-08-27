@@ -144,6 +144,7 @@ class GameEngine(private val random: Random = Random(77)) {
     }
 
     private fun beginWave() {
+        bestWave = max(bestWave, wave)
         currentPlan = Balance.wavePlan(wave)
         spawned = 0; spawnTimer = 0f; prepRemaining = Balance.PREP_SECONDS; phase = EnginePhase.ACTIVE
         if (wave == 301) announce("شما وارد فاز بی‌پایان شده‌اید", 6f)
