@@ -270,6 +270,21 @@ class GameEngine(private val random: Random = Random(77)) {
         towers.replaceAll { it.copy(webbed = max(0f, it.webbed - dt)) }
     }
 
+    private fun targetFor(tower: Tower, origin: Point): Enemy? {
+        val candidates = enemies.filter { enemy ->
+            (!enemy.flying || tower.type == TowerType.SKY_ARCHER) && distance(positionOf(enemy.progress), origin) <= Balance.towerRange(tower)
+        }
+        return when (tower.type) {
+            TowerType.CANNON -> candidates.maxByOrNull { enemy ->
+                val nearby = enemies.count { other -> distance(positionOf(other.progress), positionOf(enemy.progress)) < .115f }
+                nearby * 10f + enemy.progress
+            }
+            TowerType.ARCANE -> candidates.maxWithOrNull(compareBy<Enemy> { it.type == EnemyType.BOSS }.thenBy { it.progress })
+            TowerType.SKY_ARCHER -> candidates.maxWithOrNull(compareBy<Enemy> { it.flying }.thenBy { it.progress })
+            else -> candidates.maxByOrNull { it.progress }
+        }
+    }
+
     private fun updateTowers(dt: Float) {
         for (index in towers.indices) {
             val tower = towers[index]
@@ -278,9 +293,7 @@ class GameEngine(private val random: Random = Random(77)) {
                 towers[index] = tower.copy(cooldown = cooldown, upgradePulse = max(0f, tower.upgradePulse - dt * 2f)); continue
             }
             val origin = Balance.PLOTS[tower.plot]
-            val target = enemies.filter { enemy ->
-                (!enemy.flying || tower.type == TowerType.SKY_ARCHER) && distance(positionOf(enemy.progress), origin) <= Balance.towerRange(tower)
-            }.maxByOrNull { it.progress }
+            val target = targetFor(tower, origin)
             if (target == null) {
                 towers[index] = tower.copy(cooldown = cooldown, upgradePulse = max(0f, tower.upgradePulse - dt * 2f)); continue
             }
