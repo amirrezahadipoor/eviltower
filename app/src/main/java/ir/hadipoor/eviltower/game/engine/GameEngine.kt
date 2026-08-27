@@ -184,14 +184,14 @@ class GameEngine(private val random: Random = Random(77)) {
             val enemy = iterator.next()
             var updated = enemy
             if (enemy.burn > 0f) updated = updated.copy(burn = max(0f, enemy.burn - dt), hp = enemy.hp - enemy.burnDps * dt)
-            val phase = when {
+            val bossPhase = when {
                 enemy.type != EnemyType.BOSS -> 1
                 updated.hp > updated.maxHp * .66f -> 1
                 updated.hp > updated.maxHp * .33f -> 2
                 else -> 3
             }
             updated = updated.copy(
-                bossPhase = phase,
+                bossPhase = bossPhase,
                 stealth = updated.type == EnemyType.WRAITH && (elapsed.toInt() / 3) % 2 == 1,
                 slow = max(0f, updated.slow - dt),
                 hitFlash = max(0f, updated.hitFlash - dt),
