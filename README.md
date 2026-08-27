@@ -46,7 +46,9 @@ app/src/main/java/ir/hadipoor/eviltower/
 ```
 
 `GameEngine` هیچ وابستگی به Android ندارد و با snapshotهای immutable توسط Compose مشاهده می‌شود.
-بازی portrait-locked است تا جاده و پنل انتخاب برج روی گوشی خوانا بماند.
+بازی portrait-locked است تا جاده و پنل انتخاب برج روی گوشی خوانا بماند. ورودی فریم غیرعددی نادیده
+گرفته می‌شود، Poolها transientها را کنترل می‌کنند و release صوت/اتصال Bazaar در lifecycle idempotent
+و guarded است؛ خرابی خواندن DataStore نیز با fallback امن مدیریت می‌شود.
 
 ## موج و تعادل نهایی
 
