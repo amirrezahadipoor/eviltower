@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -110,7 +111,22 @@ fun SettingsScreen(profile: ProfileData, vm: GameViewModel) = MetaFrame("تنظ�
         SettingRow("موسیقی", "موسیقی زمینه‌ی تاریک", profile.musicOn) { vm.setMusic(it) }
         SettingRow("لرزش", "بازخورد ضربه به هسته", profile.vibrationOn) { vm.setVibration(it) }
         SettingRow("گرافیک سبک", "برای گوشی‌های ضعیف‌تر", profile.lowGraphics) { vm.setLowGraphics(it) }
+        VolumeRow("صدای افکت", profile.soundVolume, vm::setSoundVolume)
+        VolumeRow("صدای موسیقی", profile.musicVolume, vm::setMusicVolume)
         StoneCard(Modifier.fillMaxWidth()) { Column(Modifier.padding(14.dp)) { Text("زبان", color = Color.White, fontWeight = FontWeight.Bold); Text("فارسی (پیش‌فرض) • رابط راست‌به‌چپ", color = Color(0xFFBCAEC7), modifier = Modifier.padding(top = 5.dp)) } }
+    }
+}
+
+@Composable
+private fun VolumeRow(title: String, value: Float, onChange: (Float) -> Unit) {
+    StoneCard(Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(horizontal = 14.dp, vertical = 8.dp)) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text(title, color = Color.White, fontWeight = FontWeight.Bold)
+                Text("${fa((value * 100).toInt())}%", color = Gold, fontSize = 12.sp)
+            }
+            Slider(value = value, onValueChange = onChange, valueRange = 0f..1f)
+        }
     }
 }
 

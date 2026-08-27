@@ -35,6 +35,13 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
 
     init {
         audio.startMusic()
+        viewModelScope.launch {
+            profile.collect { data ->
+                audio.setSoundVolume(data.soundVolume)
+                audio.setMusicVolume(data.musicVolume)
+                if (data.musicOn) audio.startMusic() else audio.pauseMusic()
+            }
+        }
         viewModelScope.launch { delay(1_200); screen.value = AppScreen.MENU }
     }
 
@@ -86,6 +93,8 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
     fun buyArcane() { viewModelScope.launch { repository.buyArcane(); notice.value = "برج جادوی اهریمنی باز شد" } }
     fun buyGoldBonus() { viewModelScope.launch { repository.buyStartingGold(); notice.value = "۸۰ سکه‌ی شروع اضافه شد" } }
     fun setSound(value: Boolean) { viewModelScope.launch { repository.setSound(value) } }
+    fun setSoundVolume(value: Float) { audio.setSoundVolume(value); viewModelScope.launch { repository.setSoundVolume(value) } }
+    fun setMusicVolume(value: Float) { audio.setMusicVolume(value); viewModelScope.launch { repository.setMusicVolume(value) } }
     fun setMusic(value: Boolean) {
         if (value) audio.startMusic() else audio.pauseMusic()
         viewModelScope.launch { repository.setMusic(value) }

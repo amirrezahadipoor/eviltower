@@ -3,6 +3,7 @@ package ir.hadipoor.eviltower.data
 import android.content.Context
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
@@ -28,6 +29,8 @@ data class ProfileData(
     val startingGoldBonus: Int = 0,
     val soundOn: Boolean = true,
     val musicOn: Boolean = true,
+    val soundVolume: Float = .7f,
+    val musicVolume: Float = .22f,
     val vibrationOn: Boolean = true,
     val lowGraphics: Boolean = false,
 )
@@ -45,6 +48,8 @@ class GameRepository(private val context: Context) {
         val goldBonus = intPreferencesKey("starting_gold_bonus")
         val sound = booleanPreferencesKey("sound_on")
         val music = booleanPreferencesKey("music_on")
+        val soundVolume = floatPreferencesKey("sound_volume")
+        val musicVolume = floatPreferencesKey("music_volume")
         val vibration = booleanPreferencesKey("vibration_on")
         val lowGraphics = booleanPreferencesKey("low_graphics")
     }
@@ -62,6 +67,8 @@ class GameRepository(private val context: Context) {
             startingGoldBonus = p[K.goldBonus] ?: 0,
             soundOn = p[K.sound] ?: true,
             musicOn = p[K.music] ?: true,
+            soundVolume = p[K.soundVolume] ?: .7f,
+            musicVolume = p[K.musicVolume] ?: .22f,
             vibrationOn = p[K.vibration] ?: true,
             lowGraphics = p[K.lowGraphics] ?: false,
         )
@@ -87,6 +94,8 @@ class GameRepository(private val context: Context) {
     suspend fun buyStartingGold() { context.profileStore.edit { p -> if ((p[K.coins] ?: 0) >= 500) { p[K.coins] = (p[K.coins] ?: 0) - 500; p[K.goldBonus] = (p[K.goldBonus] ?: 0) + 80 } } }
     suspend fun setSound(value: Boolean) { context.profileStore.edit { it[K.sound] = value } }
     suspend fun setMusic(value: Boolean) { context.profileStore.edit { it[K.music] = value } }
+    suspend fun setSoundVolume(value: Float) { context.profileStore.edit { it[K.soundVolume] = value.coerceIn(0f, 1f) } }
+    suspend fun setMusicVolume(value: Float) { context.profileStore.edit { it[K.musicVolume] = value.coerceIn(0f, 1f) } }
     suspend fun setVibration(value: Boolean) { context.profileStore.edit { it[K.vibration] = value } }
     suspend fun setLowGraphics(value: Boolean) { context.profileStore.edit { it[K.lowGraphics] = value } }
 
