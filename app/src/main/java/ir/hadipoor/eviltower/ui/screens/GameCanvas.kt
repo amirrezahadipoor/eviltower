@@ -186,10 +186,23 @@ private fun DrawScope.drawEnemies(snapshot: GameSnapshot) {
             EnemyType.WOLF -> { drawOval(Color(0xFF5A477F), topLeft = Offset(p.x - 14, p.y - 8), size = androidx.compose.ui.geometry.Size(28f, 16f)); drawCircle(Color(0xFFB8A3FF), 3f, p.copy(x = p.x + 8, y = p.y - 2)) }
             EnemyType.SKELETON -> { drawCircle(Color(0xFFE5D6B8), radius, p); drawCircle(Color(0xFF2A1E2E), 3f, p.copy(x = p.x - 4, y = p.y - 2)); drawCircle(Color(0xFF2A1E2E), 3f, p.copy(x = p.x + 4, y = p.y - 2)); line(p.copy(y = p.y + 8), p.copy(y = p.y + 19), Color(0xFFE5D6B8), 5f) }
             EnemyType.OGRE -> { round(Color(0xFF6E806C), Rect(p.x - 15, p.y - 16, p.x + 15, p.y + 16), 8f); drawCircle(Color(0xFFFFC857), 3f, p.copy(x = p.x - 6, y = p.y - 4)); drawCircle(Color(0xFFFFC857), 3f, p.copy(x = p.x + 6, y = p.y - 4)) }
+            EnemyType.SPIDER -> {
+                drawCircle(Color(0xFFC65FA2), radius, p)
+                repeat(4) { i ->
+                    val y = -7f + i * 5f
+                    line(p.copy(x = p.x - 7, y = p.y + y), p.copy(x = p.x - 22, y = p.y + y - 6), Color(0xFFEAA4D0), 2.5f)
+                    line(p.copy(x = p.x + 7, y = p.y + y), p.copy(x = p.x + 22, y = p.y + y - 6), Color(0xFFEAA4D0), 2.5f)
+                }
+                drawCircle(Color.White, 2f, p.copy(x = p.x - 4, y = p.y - 2)); drawCircle(Color.White, 2f, p.copy(x = p.x + 4, y = p.y - 2))
+            }
             EnemyType.WRAITH -> { val alpha = if (enemy.stealth) .22f else .68f; drawCircle(Color(0xFF7B5BA7).copy(alpha = alpha), radius + 4f, p); drawCircle(Color(0xFFD9B8FF).copy(alpha = alpha + .2f), 3f, p.copy(x = p.x + 5, y = p.y - 2)) }
             EnemyType.IMP -> { drawCircle(Color(0xFFE95645), radius, p); line(p.copy(x = p.x - 5, y = p.y - 7), p.copy(x = p.x - 11, y = p.y - 16), Color(0xFFFFB347), 3f); line(p.copy(x = p.x + 5, y = p.y - 7), p.copy(x = p.x + 11, y = p.y - 16), Color(0xFFFFB347), 3f) }
             EnemyType.MINI_BOSS, EnemyType.BOSS -> { drawCircle(Danger.copy(alpha = .18f), radius + 10f, p); drawCircle(if (enemy.type == EnemyType.BOSS) when (enemy.bossPhase) { 1 -> Color(0xFFB52F5B); 2 -> Color(0xFFCF553D); else -> Color(0xFFE36A2E) } else Color(0xFF8E493D), radius, p); drawCircle(Gold, 4f, p.copy(y = p.y - 3)); line(p.copy(x = p.x - radius, y = p.y - radius - 4), p.copy(x = p.x - 5, y = p.y - radius - 14), Gold, 3f); line(p.copy(x = p.x + radius, y = p.y - radius - 4), p.copy(x = p.x + 5, y = p.y - radius - 14), Gold, 3f) }
-            else -> { drawCircle(if (enemy.elite) Color(0xFFB9455F) else Acid, radius, p); drawCircle(Color(0xFF211828), 3f, p.copy(x = p.x + 4, y = p.y - 2)) }
+            else -> {
+                drawCircle(if (enemy.elite) Color(0xFFB9455F) else Acid, radius, p)
+                drawCircle(Color(0xFF211828), 3f, p.copy(x = p.x + 4, y = p.y - 2))
+                if (enemy.elite) { line(p.copy(x = p.x - 7, y = p.y - 7), p.copy(x = p.x - 13, y = p.y - 17), Danger, 2.5f); line(p.copy(x = p.x + 3, y = p.y - 7), p.copy(x = p.x + 9, y = p.y - 17), Danger, 2.5f) }
+            }
         }
         round(Color(0xAA0A0710), Rect(p.x - radius, p.y - radius - 10, p.x + radius, p.y - radius - 6), 2f)
         round(if (enemy.type == EnemyType.BOSS) Danger else Color(0xFF7CE38B), Rect(p.x - radius, p.y - radius - 10, p.x - radius + 2 * radius * (enemy.hp / enemy.maxHp).coerceIn(0f, 1f), p.y - radius - 6), 2f)
