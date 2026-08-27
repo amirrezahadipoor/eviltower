@@ -24,7 +24,6 @@ import ir.hadipoor.eviltower.game.model.Tower
 import ir.hadipoor.eviltower.game.model.TowerType
 import ir.hadipoor.eviltower.ui.theme.Acid
 import ir.hadipoor.eviltower.ui.theme.Danger
-import ir.hadipoor.eviltower.ui.theme.Ember
 import ir.hadipoor.eviltower.ui.theme.Gold
 import ir.hadipoor.eviltower.ui.theme.Stone
 import ir.hadipoor.eviltower.ui.theme.StoneDark
@@ -61,6 +60,10 @@ fun GameCanvas(snapshot: GameSnapshot, onPlotTap: (Int) -> Unit, modifier: Modif
     }
 }
 
+private fun DrawScope.line(start: Offset, end: Offset, color: Color, width: Float, cap: StrokeCap = StrokeCap.Butt) {
+    drawLine(color, start, end, width, cap)
+}
+
 private fun DrawScope.pos(point: Point): Offset = Offset(point.x * size.width, point.y * size.height)
 private fun DrawScope.pos(x: Float, y: Float): Offset = Offset(x * size.width, y * size.height)
 
@@ -81,7 +84,7 @@ private fun DrawScope.drawTowerSource(wave: Int) {
         lineTo(p.x + 24 * scale, p.y - 50 * scale); lineTo(p.x + 35 * scale, p.y + 52 * scale); close()
     }
     drawPath(tower, Color(0xFF321E44)); drawPath(tower, Color(0xFF6E365C), style = Stroke(2.5f))
-    drawLine(pos(.92f, .07f), pos(.92f, .22f), Color(0xFF98E36E), 5f, StrokeCap.Round)
+    line(pos(.92f, .07f), pos(.92f, .22f), Color(0xFF98E36E), 5f, StrokeCap.Round)
     drawCircle(Color(0xFFB9FF83), 7f * scale, p.copy(y = p.y - 8 * scale))
     drawCircle(Color(0xFF1B122A), 2.5f, p.copy(y = p.y - 8 * scale))
 }
@@ -89,9 +92,9 @@ private fun DrawScope.drawTowerSource(wave: Int) {
 private fun DrawScope.drawRoad() {
     val points = Balance.PATH.map(::pos)
     for (i in 0 until points.lastIndex) {
-        drawLine(points[i], points[i + 1], Color(0x552F283A), 42f, StrokeCap.Round)
-        drawLine(points[i], points[i + 1], Color(0xFF51404D), 30f, StrokeCap.Round)
-        drawLine(points[i], points[i + 1], Color(0xFF73555A), 22f, StrokeCap.Round)
+        line(points[i], points[i + 1], Color(0x552F283A), 42f, StrokeCap.Round)
+        line(points[i], points[i + 1], Color(0xFF51404D), 30f, StrokeCap.Round)
+        line(points[i], points[i + 1], Color(0xFF73555A), 22f, StrokeCap.Round)
     }
     points.forEach { drawCircle(Color(0x226B4F5A), 18f, it) }
 }
@@ -102,8 +105,8 @@ private fun DrawScope.drawCore() {
     drawCircle(Color(0xFF293C69), 27f, p)
     drawCircle(Color(0xFF69B6FF), 17f, p)
     drawCircle(Color(0xFFD9F4FF), 6f, p)
-    drawLine(p.copy(x = p.x - 34), p.copy(x = p.x + 34), Color(0xFF91CEFF), 3f)
-    drawLine(p.copy(y = p.y - 34), p.copy(y = p.y + 34), Color(0xFF91CEFF), 3f)
+    line(p.copy(x = p.x - 34), p.copy(x = p.x + 34), Color(0xFF91CEFF), 3f)
+    line(p.copy(y = p.y - 34), p.copy(y = p.y + 34), Color(0xFF91CEFF), 3f)
 }
 
 private fun DrawScope.drawPlots(snapshot: GameSnapshot) {
@@ -114,8 +117,8 @@ private fun DrawScope.drawPlots(snapshot: GameSnapshot) {
         drawCircle(if (selected) Color(0xFF70D6FF) else Color(0xFF6E536B), 20f, center, style = Stroke(2f))
         val tower = snapshot.towers.firstOrNull { it.plot == index }
         if (tower == null) {
-            drawLine(center.copy(x = center.x - 7), center.copy(x = center.x + 7), Color(0xFFB9A4B7), 2f)
-            drawLine(center.copy(y = center.y - 7), center.copy(y = center.y + 7), Color(0xFFB9A4B7), 2f)
+            line(center.copy(x = center.x - 7), center.copy(x = center.x + 7), Color(0xFFB9A4B7), 2f)
+            line(center.copy(y = center.y - 7), center.copy(y = center.y + 7), Color(0xFFB9A4B7), 2f)
         } else drawTower(tower, center)
     }
 }
@@ -130,14 +133,14 @@ private fun DrawScope.drawTower(tower: Tower, center: Offset) {
     round(color.copy(alpha = .75f), Rect(center.x - (8 + tier) * pulse, center.y - 13 * pulse, center.x + (8 + tier) * pulse, center.y + 12 * pulse), 4f)
     when (tower.type) {
         TowerType.ARCHER, TowerType.SKY_ARCHER -> {
-            drawLine(center.copy(x = center.x - 15), center.copy(x = center.x + 15), color, 3f)
+            line(center.copy(x = center.x - 15), center.copy(x = center.x + 15), color, 3f)
             drawArc(color, 205f, 130f, false, topLeft = Offset(center.x - 13, center.y - 15), size = androidx.compose.ui.geometry.Size(26f, 25f), style = Stroke(3f))
         }
-        TowerType.CANNON -> { drawCircle(color, (10 + tier).toFloat(), center.copy(y = center.y - 8)); drawLine(center.copy(y = center.y - 8), center.copy(x = center.x + 20, y = center.y - 17), color, 6f, StrokeCap.Round) }
-        TowerType.FROST -> { drawCircle(Color(0xFFDBF8FF), (8 + tier).toFloat(), center.copy(y = center.y - 7)); repeat(4) { i -> drawLine(center.copy(y = center.y - 8), center + Offset(cos(i * 1.57f) * 18, sin(i * 1.57f) * 18), color, 2f) } }
+        TowerType.CANNON -> { drawCircle(color, (10 + tier).toFloat(), center.copy(y = center.y - 8)); line(center.copy(y = center.y - 8), center.copy(x = center.x + 20, y = center.y - 17), color, 6f, StrokeCap.Round) }
+        TowerType.FROST -> { drawCircle(Color(0xFFDBF8FF), (8 + tier).toFloat(), center.copy(y = center.y - 7)); repeat(4) { i -> line(center.copy(y = center.y - 8), center + Offset(cos(i * 1.57f) * 18, sin(i * 1.57f) * 18), color, 2f) } }
         TowerType.FIRE -> { val flame = Path().apply { moveTo(center.x, center.y - 22); quadraticTo(center.x - 14, center.y - 5, center.x, center.y + 3); quadraticTo(center.x + 14, center.y - 5, center.x, center.y - 22); close() }; drawPath(flame, color); drawCircle(Gold, 4f, center.copy(y = center.y - 9)) }
-        TowerType.LIGHTNING -> { drawCircle(color, 7f + tier, center.copy(y = center.y - 9)); drawLine(center.copy(x = center.x - 5, y = center.y - 16), center.copy(x = center.x + 4, y = center.y + 1), color, 4f); drawLine(center.copy(x = center.x + 4, y = center.y + 1), center.copy(x = center.x - 5, y = center.y + 10), color, 4f) }
-        TowerType.ARCANE -> { drawCircle(color, 8f + tier, center.copy(y = center.y - 8)); drawCircle(Color.White, 3f, center.copy(y = center.y - 8)); drawLine(center.copy(x = center.x - 13, y = center.y + 4), center.copy(x = center.x + 13, y = center.y + 4), color, 3f) }
+        TowerType.LIGHTNING -> { drawCircle(color, 7f + tier, center.copy(y = center.y - 9)); line(center.copy(x = center.x - 5, y = center.y - 16), center.copy(x = center.x + 4, y = center.y + 1), color, 4f); line(center.copy(x = center.x + 4, y = center.y + 1), center.copy(x = center.x - 5, y = center.y + 10), color, 4f) }
+        TowerType.ARCANE -> { drawCircle(color, 8f + tier, center.copy(y = center.y - 8)); drawCircle(Color.White, 3f, center.copy(y = center.y - 8)); line(center.copy(x = center.x - 13, y = center.y + 4), center.copy(x = center.x + 13, y = center.y + 4), color, 3f) }
     }
     repeat(tier.coerceAtMost(6)) { i -> drawCircle(Gold.copy(alpha = .7f), 2.2f, center + Offset(-10f + i * 4f, 20f)) }
     repeat(detail / 3) { i -> drawCircle(Color.White.copy(alpha = .45f), 1.5f, center + Offset(-8f + i * 8f, -24f)) }
@@ -149,13 +152,13 @@ private fun DrawScope.drawEnemies(snapshot: GameSnapshot) {
         val radius = when (enemy.type) { EnemyType.BOSS -> 24f; EnemyType.MINI_BOSS -> 18f; EnemyType.OGRE -> 15f; else -> 10f }
         if (enemy.hitFlash > 0f) drawCircle(Color.White.copy(alpha = .7f), radius + 5f, p)
         when (enemy.type) {
-            EnemyType.BAT -> { drawCircle(Color(0xFF8E65D1), radius, p); drawLine(p.copy(x = p.x - 8, y = p.y - 2), p.copy(x = p.x - 22, y = p.y - 12), Color(0xFFC19BFF), 5f); drawLine(p.copy(x = p.x + 8, y = p.y - 2), p.copy(x = p.x + 22, y = p.y - 12), Color(0xFFC19BFF), 5f) }
+            EnemyType.BAT -> { drawCircle(Color(0xFF8E65D1), radius, p); line(p.copy(x = p.x - 8, y = p.y - 2), p.copy(x = p.x - 22, y = p.y - 12), Color(0xFFC19BFF), 5f); line(p.copy(x = p.x + 8, y = p.y - 2), p.copy(x = p.x + 22, y = p.y - 12), Color(0xFFC19BFF), 5f) }
             EnemyType.WOLF -> { drawOval(Color(0xFF5A477F), topLeft = Offset(p.x - 14, p.y - 8), size = androidx.compose.ui.geometry.Size(28f, 16f)); drawCircle(Color(0xFFB8A3FF), 3f, p.copy(x = p.x + 8, y = p.y - 2)) }
-            EnemyType.SKELETON -> { drawCircle(Color(0xFFE5D6B8), radius, p); drawCircle(Color(0xFF2A1E2E), 3f, p.copy(x = p.x - 4, y = p.y - 2)); drawCircle(Color(0xFF2A1E2E), 3f, p.copy(x = p.x + 4, y = p.y - 2)); drawLine(p.copy(y = p.y + 8), p.copy(y = p.y + 19), Color(0xFFE5D6B8), 5f) }
+            EnemyType.SKELETON -> { drawCircle(Color(0xFFE5D6B8), radius, p); drawCircle(Color(0xFF2A1E2E), 3f, p.copy(x = p.x - 4, y = p.y - 2)); drawCircle(Color(0xFF2A1E2E), 3f, p.copy(x = p.x + 4, y = p.y - 2)); line(p.copy(y = p.y + 8), p.copy(y = p.y + 19), Color(0xFFE5D6B8), 5f) }
             EnemyType.OGRE -> { round(Color(0xFF6E806C), Rect(p.x - 15, p.y - 16, p.x + 15, p.y + 16), 8f); drawCircle(Color(0xFFFFC857), 3f, p.copy(x = p.x - 6, y = p.y - 4)); drawCircle(Color(0xFFFFC857), 3f, p.copy(x = p.x + 6, y = p.y - 4)) }
             EnemyType.WRAITH -> { drawCircle(Color(0xFF7B5BA7).copy(alpha = .65f), radius + 4f, p); drawCircle(Color(0xFFD9B8FF), 3f, p.copy(x = p.x + 5, y = p.y - 2)) }
-            EnemyType.IMP -> { drawCircle(Color(0xFFE95645), radius, p); drawLine(p.copy(x = p.x - 5, y = p.y - 7), p.copy(x = p.x - 11, y = p.y - 16), Color(0xFFFFB347), 3f); drawLine(p.copy(x = p.x + 5, y = p.y - 7), p.copy(x = p.x + 11, y = p.y - 16), Color(0xFFFFB347), 3f) }
-            EnemyType.MINI_BOSS, EnemyType.BOSS -> { drawCircle(Danger.copy(alpha = .18f), radius + 10f, p); drawCircle(if (enemy.type == EnemyType.BOSS) Color(0xFFB52F5B) else Color(0xFF8E493D), radius, p); drawCircle(Gold, 4f, p.copy(y = p.y - 3)); drawLine(p.copy(x = p.x - radius, y = p.y - radius - 4), p.copy(x = p.x - 5, y = p.y - radius - 14), Gold, 3f); drawLine(p.copy(x = p.x + radius, y = p.y - radius - 4), p.copy(x = p.x + 5, y = p.y - radius - 14), Gold, 3f) }
+            EnemyType.IMP -> { drawCircle(Color(0xFFE95645), radius, p); line(p.copy(x = p.x - 5, y = p.y - 7), p.copy(x = p.x - 11, y = p.y - 16), Color(0xFFFFB347), 3f); line(p.copy(x = p.x + 5, y = p.y - 7), p.copy(x = p.x + 11, y = p.y - 16), Color(0xFFFFB347), 3f) }
+            EnemyType.MINI_BOSS, EnemyType.BOSS -> { drawCircle(Danger.copy(alpha = .18f), radius + 10f, p); drawCircle(if (enemy.type == EnemyType.BOSS) Color(0xFFB52F5B) else Color(0xFF8E493D), radius, p); drawCircle(Gold, 4f, p.copy(y = p.y - 3)); line(p.copy(x = p.x - radius, y = p.y - radius - 4), p.copy(x = p.x - 5, y = p.y - radius - 14), Gold, 3f); line(p.copy(x = p.x + radius, y = p.y - radius - 4), p.copy(x = p.x + 5, y = p.y - radius - 14), Gold, 3f) }
             else -> { drawCircle(if (enemy.elite) Color(0xFFB9455F) else Acid, radius, p); drawCircle(Color(0xFF211828), 3f, p.copy(x = p.x + 4, y = p.y - 2)) }
         }
         round(Color(0xAA0A0710), Rect(p.x - radius, p.y - radius - 10, p.x + radius, p.y - radius - 6), 2f)

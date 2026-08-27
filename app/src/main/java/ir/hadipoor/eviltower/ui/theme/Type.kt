@@ -11,6 +11,22 @@ val Vazir = FontFamily(
     Font(R.font.vazirmatn_medium, FontWeight.Medium),
     Font(R.font.vazirmatn_bold, FontWeight.Bold),
 )
-val Typography = Typography().run {
-    copy(fontFamily = Vazir)
-}
+
+private val base = Typography()
+val Typography = Typography(
+    displayLarge = base.displayLarge.copy(fontFamily = Vazir),
+    displayMedium = base.displayMedium.copy(fontFamily = Vazir),
+    displaySmall = base.displaySmall.copy(fontFamily = Vazir),
+    headlineLarge = base.headlineLarge.copy(fontFamily = Vazir),
+    headlineMedium = base.headlineMedium.copy(fontFamily = Vazir),
+    headlineSmall = base.headlineSmall.copy(fontFamily = Vazir),
+    titleLarge = base.titleLarge.copy(fontFamily = Vazir),
+    titleMedium = base.titleMedium.copy(fontFamily = Vazir),
+    titleSmall = base.titleSmall.copy(fontFamily = Vazir),
+    bodyLarge = base.bodyLarge.copy(fontFamily = Vazir),
+    bodyMedium = base.bodyMedium.copy(fontFamily = Vazir),
+    bodySmall = base.bodySmall.copy(fontFamily = Vazir),
+    labelLarge = base.labelLarge.copy(fontFamily = Vazir),
+    labelMedium = base.labelMedium.copy(fontFamily = Vazir),
+    labelSmall = base.labelSmall.copy(fontFamily = Vazir),
+)
