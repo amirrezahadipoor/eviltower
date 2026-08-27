@@ -29,6 +29,14 @@ class EngineTest {
         assertTrue(!engine.activateShield())
     }
 
+    @Test fun `invalid frame delta is ignored safely`() {
+        val engine = GameEngine()
+        engine.startRun()
+        engine.update(Float.NaN)
+        engine.update(Float.POSITIVE_INFINITY)
+        assertEquals(20, engine.snapshot().coreHp)
+    }
+
     @Test fun `simulation advances and never skips phase rules`() {
         val engine = GameEngine()
         engine.startRun(startingGold = 100000)
