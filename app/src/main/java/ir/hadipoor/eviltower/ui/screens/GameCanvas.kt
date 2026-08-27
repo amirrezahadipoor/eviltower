@@ -214,7 +214,7 @@ private fun DrawScope.drawEnemies(snapshot: GameSnapshot, runtime: SvgRuntime) {
         val bob = SpriteAnimation.sample(if (enemy.flying) SpriteState.MOVE else SpriteState.IDLE, snapshot.worldTime, enemy.id).bob * if (enemy.flying) 1.6f else 1f
         val p = base.copy(y = base.y + bob)
         val radius = when (enemy.type) { EnemyType.BOSS -> 24f; EnemyType.MINI_BOSS -> 18f; EnemyType.OGRE -> 15f; else -> 10f }
-        val state = if (enemy.hitFlash > 0f) SpriteState.HIT else if (enemy.type == EnemyType.BOSS && snapshot.bossTelegraph > 0f) SpriteState.ATTACK else SpriteState.MOVE
+        val state = if (enemy.hitFlash > 0f) SpriteState.HIT else if (enemy.type == EnemyType.BOSS && snapshot.bossTelegraph > 0f) SpriteState.ATTACK else if (enemy.progress > .86f) SpriteState.ATTACK else SpriteState.MOVE
         val motion = SpriteAnimation.sample(state, snapshot.worldTime, enemy.id)
         val variant = when (enemy.type) { EnemyType.BOSS, EnemyType.MINI_BOSS -> enemy.bossDesign % 3 else -> if (enemy.elite) 4 + enemy.id % 5 else enemy.id % 4 }
         drawSvg(runtime, SvgAssets.enemy(enemy.type, variant), p, radius * 2.5f * motion.scale, alpha = if (enemy.stealth) .22f else .36f, rotation = motion.tilt)
@@ -257,6 +257,9 @@ private fun DrawScope.drawEnemies(snapshot: GameSnapshot, runtime: SvgRuntime) {
                 if (enemy.elite) { line(p.copy(x = p.x - 7, y = p.y - 7), p.copy(x = p.x - 13, y = p.y - 17), Danger, 2.5f); line(p.copy(x = p.x + 3, y = p.y - 7), p.copy(x = p.x + 9, y = p.y - 17), Danger, 2.5f) }
             }
         }
+        if (state == SpriteState.ATTACK) {
+            line(p.copy(x = p.x - radius - 4f), p.copy(x = p.x + radius + 4f, y = p.y + sin(snapshot.worldTime * 12f + enemy.id) * 5f), Danger.copy(alpha = .7f), 2f, StrokeCap.Round)
+        }
         round(Color(0xAA0A0710), Rect(p.x - radius, p.y - radius - 10, p.x + radius, p.y - radius - 6), 2f)
         round(if (enemy.type == EnemyType.BOSS) Danger else Color(0xFF7CE38B), Rect(p.x - radius, p.y - radius - 10, p.x - radius + 2 * radius * (enemy.hp / enemy.maxHp).coerceIn(0f, 1f), p.y - radius - 6), 2f)
     }
@@ -286,7 +289,14 @@ private fun DrawScope.drawEffects(snapshot: GameSnapshot) {
     snapshot.particles.forEach { particle ->
         val p = pos(particle.at); val alpha = (1f - particle.age / .78f).coerceIn(0f, 1f)
         val angle = particle.id * .77f; val distance = particle.age * 55f
-        drawCircle(particle.color.copy(alpha = alpha), (3f * particle.size) * alpha, p + Offset(cos(angle) * distance, sin(angle) * distance))
+        val end = p + Offset(cos(angle) * distance, sin(angle) * distance)
+        when (particle.kind) {
+            1, 2, 3, 4, 6 -> line(p, end, particle.color.copy(alpha = alpha), (1.5f + particle.size) * alpha, StrokeCap.Round)
+            5 -> round(particle.color.copy(alpha = alpha), Rect(end.x - 4f, end.y - 4f, end.x + 4f, end.y + 4f), 2f)
+            7 -> { drawCircle(particle.color.copy(alpha = alpha), 3.5f * particle.size * alpha, end); drawCircle(Color(0xFFFFD166).copy(alpha = alpha), 1.4f * alpha, end) }
+            8 -> { drawCircle(particle.color.copy(alpha = alpha * .35f), (9f + distance * .2f) * particle.size, p); line(p, end, Gold.copy(alpha = alpha), 2.5f, StrokeCap.Round) }
+            else -> drawCircle(particle.color.copy(alpha = alpha), (3f * particle.size) * alpha, end)
+        }
     }
     drawIntoCanvas { canvas ->
         val paint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply { textSize = 24f; typeface = android.graphics.Typeface.DEFAULT_BOLD; textAlign = android.graphics.Paint.Align.CENTER }

@@ -353,13 +353,18 @@ class GameEngine(private val random: Random = Random(77)) {
         gold += reward; goldEarned += reward; enemiesDefeated++; combo++
         if (enemy.type == EnemyType.BOSS) bossesDefeated++
         addFloating("+$reward", positionOf(enemy.progress), Color(0xFFFFD166))
+        val deathKind = when (enemy.type) {
+            EnemyType.WOLF -> 1; EnemyType.BAT -> 2; EnemyType.SKELETON -> 3; EnemyType.SPIDER -> 4
+            EnemyType.OGRE -> 5; EnemyType.WRAITH -> 6; EnemyType.IMP -> 7
+            EnemyType.MINI_BOSS, EnemyType.BOSS -> 8; else -> 0
+        }
         addBurst(positionOf(enemy.progress), when (enemy.type) {
             EnemyType.BAT, EnemyType.WRAITH -> Color(0xFFC19BFF)
             EnemyType.IMP -> Color(0xFFFF5B4D)
             EnemyType.SKELETON -> Color(0xFFE8E0D0)
             EnemyType.SPIDER -> Color(0xFFC65FA2)
             else -> Color(0xFF7CE38B)
-        }, if (enemy.type == EnemyType.BOSS) 30 else 8)
+        }, if (enemy.type == EnemyType.BOSS) 30 else 8, deathKind)
         if (enemy.type == EnemyType.IMP) {
             enemies.filter { distance(positionOf(it.progress), positionOf(enemy.progress)) < .12f }.map { it.id }.toList()
                 .forEach { damageEnemy(it, enemy.maxHp * .12f, TowerType.FIRE, positionOf(enemy.progress), 20, false) }
@@ -383,9 +388,11 @@ class GameEngine(private val random: Random = Random(77)) {
     }
 
     private fun addFloating(text: String, at: Point, color: Color) { floatingTexts += FloatingText(nextId++, text, at, color) }
-    private fun addParticle(at: Point, color: Color, size: Float) { particles += particlePool.obtain().copy(id = nextId++, at = at, color = color, age = 0f, size = size) }
-    private fun addBurst(at: Point, color: Color, count: Int = 8) {
-        repeat(if (lowGraphics) max(1, count / 2) else count) { addParticle(at, color, .7f + random.nextFloat() * 1.2f) }
+    private fun addParticle(at: Point, color: Color, size: Float, kind: Int = 0) {
+        particles += particlePool.obtain().copy(id = nextId++, at = at, color = color, age = 0f, size = size, kind = kind)
+    }
+    private fun addBurst(at: Point, color: Color, count: Int = 8, kind: Int = 0) {
+        repeat(if (lowGraphics) max(1, count / 2) else count) { addParticle(at, color, .7f + random.nextFloat() * 1.2f, kind) }
     }
 
     private fun positionOf(progress: Float): Point {

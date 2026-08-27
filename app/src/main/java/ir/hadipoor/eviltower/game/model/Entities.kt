@@ -84,7 +84,7 @@ data class Projectile(
 )
 
 data class FloatingText(val id: Int, val text: String, val at: Point, val color: Color, val age: Float = 0f)
-data class Particle(val id: Int, val at: Point, val color: Color, val age: Float = 0f, val size: Float = 1f)
+data class Particle(val id: Int, val at: Point, val color: Color, val age: Float = 0f, val size: Float = 1f, val kind: Int = 0)
 
 data class WaveUnit(val type: EnemyType, val elite: Boolean = false, val bossName: String? = null)
 data class WavePlan(val wave: Int, val units: List<WaveUnit>, val isBoss: Boolean, val isMiniBoss: Boolean, val bossName: String? = null)

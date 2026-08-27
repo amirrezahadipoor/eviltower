@@ -30,6 +30,8 @@ jobs:
           key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', 'gradle/libs.versions.toml', 'gradle/wrapper/gradle-wrapper.properties') }}
           restore-keys: gradle-${{ runner.os }}-
       - run: chmod +x ./gradlew
+      - run: python3 tools/validate_svg_assets.py
+      - run: python3 tools/balance_simulation.py
       - run: ./gradlew test lint --stacktrace
 
   package:
