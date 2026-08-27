@@ -55,7 +55,7 @@ fun GameCanvas(snapshot: GameSnapshot, onPlotTap: (Int) -> Unit, modifier: Modif
         drawFog(snapshot.wave, snapshot.worldTime)
         drawTowerSource(snapshot.wave, snapshot.worldTime)
         drawRoad()
-        drawCore(snapshot.worldTime)
+        drawCore(snapshot.worldTime, snapshot.bossTelegraph)
         drawPlots(snapshot)
         drawEnemies(snapshot)
         drawProjectiles(snapshot)
@@ -111,9 +111,13 @@ private fun DrawScope.drawRoad() {
     points.forEach { drawCircle(Color(0x226B4F5A), 18f, it) }
 }
 
-private fun DrawScope.drawCore(time: Float) {
+private fun DrawScope.drawCore(time: Float, telegraph: Float) {
     val p = pos(Balance.PATH.last())
     val pulse = 1f + sin(time * 3f) * .08f
+    if (telegraph > 0f) {
+        val warning = (1f - (telegraph / 2.1f).coerceIn(0f, 1f))
+        drawCircle(Danger.copy(alpha = .20f + warning * .25f), 54f + warning * 18f, p, style = Stroke(4f))
+    }
     drawCircle(Color(0x334C8DFF), 42f * pulse, p)
     drawCircle(Color(0xFF293C69), 27f * pulse, p)
     drawCircle(Color(0xFF69B6FF), 17f * pulse, p)

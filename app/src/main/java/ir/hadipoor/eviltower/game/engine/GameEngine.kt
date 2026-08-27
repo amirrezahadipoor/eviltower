@@ -43,6 +43,9 @@ class GameEngine(private val random: Random = Random(77)) {
     private var message: String? = null
     private var messageTimer = 0f
     private var abilityCooldown = 0f
+    private var bossAttackCooldown = 7f
+    private var bossTelegraph = 0f
+    private var hitStop = 0f
     private var screenShake = 0f
     private var arcaneUnlocked = false
     private val towers = mutableListOf<Tower>()
@@ -51,6 +54,8 @@ class GameEngine(private val random: Random = Random(77)) {
     private val floatingTexts = mutableListOf<FloatingText>()
     private val particles = mutableListOf<Particle>()
     private val particlePool = ObjectPool<Particle>(factory = { Particle(0, Point(0f, 0f), Color.White) })
+    private val projectilePool = ObjectPool<Projectile>(factory = { Projectile(0, TowerType.ARCHER, Point(0f, 0f), Point(0f, 0f)) }, initialSize = 24)
+    private val enemyPool = ObjectPool<Enemy>(factory = { Enemy(0, EnemyType.GRUNT, 0f, 0f, 1f, false) }, initialSize = 64)
 
     fun startRun(startingGold: Int = 520, personalBest: Int = 0, arcane: Boolean = false) {
         phase = EnginePhase.PREP; wave = 1; bestWave = personalBest
@@ -58,8 +63,10 @@ class GameEngine(private val random: Random = Random(77)) {
         enemiesDefeated = 0; goldEarned = 0; elapsed = 0f
         prepRemaining = Balance.PREP_SECONDS; spawnTimer = 0f; spawned = 0; combo = 0; nextId = 1
         selectedPlot = null; currentPlan = null; message = null; messageTimer = 0f
-        abilityCooldown = 0f; screenShake = 0f; arcaneUnlocked = arcane
+        abilityCooldown = 0f; bossAttackCooldown = 7f; bossTelegraph = 0f; hitStop = 0f; screenShake = 0f; arcaneUnlocked = arcane
         particles.forEach(particlePool::recycle)
+        enemies.forEach(enemyPool::recycle)
+        projectiles.forEach(projectilePool::recycle)
         towers.clear(); enemies.clear(); projectiles.clear(); floatingTexts.clear(); particles.clear()
     }
 
@@ -124,10 +131,11 @@ class GameEngine(private val random: Random = Random(77)) {
         if (phase == EnginePhase.PAUSED || phase == EnginePhase.DEFEATED) return
         val dt = dtRaw.coerceIn(0f, .05f)
         elapsed += dt
-        abilityCooldown = max(0f, abilityCooldown - dt)
         messageTimer = max(0f, messageTimer - dt)
         screenShake = max(0f, screenShake - dt * 1.7f)
         updateEffects(dt)
+        if (hitStop > 0f) { hitStop = max(0f, hitStop - dt); return }
+        abilityCooldown = max(0f, abilityCooldown - dt)
         when (phase) {
             EnginePhase.PREP -> { prepRemaining -= dt; if (prepRemaining <= 0f) beginWave() }
             EnginePhase.ACTIVE -> updateActive(dt)
@@ -162,20 +170,45 @@ class GameEngine(private val random: Random = Random(77)) {
                 }
             }
         }
+        updateBossAttack(dt)
         updateEnemies(dt)
         updateTowers(dt)
         projectiles.replaceAll { it.copy(progress = it.progress + dt * 5.5f) }
+        projectiles.filter { it.progress >= 1f }.forEach(projectilePool::recycle)
         projectiles.removeAll { it.progress >= 1f }
         if (phase == EnginePhase.ACTIVE && spawned >= (currentPlan?.units?.size ?: 0) && enemies.isEmpty() && projectiles.isEmpty()) clearWave()
     }
 
     private fun spawn(unit: WaveUnit) {
         val hp = Balance.enemyHp(unit.type, wave, unit.elite)
-        enemies += Enemy(
+        enemies += enemyPool.obtain().copy(
             id = nextId++, type = unit.type, progress = 0f, hp = hp, maxHp = hp,
             flying = unit.type.flying, elite = unit.elite, bossName = unit.bossName,
             bossPhase = 1, stealth = unit.type == EnemyType.WRAITH,
         )
+    }
+
+    private fun updateBossAttack(dt: Float) {
+        val boss = enemies.firstOrNull { it.type == EnemyType.BOSS } ?: run {
+            bossAttackCooldown = 7f; bossTelegraph = 0f; return
+        }
+        if (bossTelegraph > 0f) {
+            bossTelegraph -= dt
+            if (bossTelegraph <= 0f && enemies.any { it.id == boss.id }) {
+                coreHp -= if (boss.bossPhase >= 3) 2 else 1
+                screenShake = max(screenShake, .16f)
+                addBurst(Balance.PATH.last(), Color(0xFFFF476F), 16)
+            }
+        } else {
+            bossAttackCooldown -= dt
+            if (bossAttackCooldown <= 0f) {
+                bossTelegraph = if (boss.bossPhase >= 3) 1.4f else 2.1f
+                bossAttackCooldown = if (boss.bossPhase >= 3) 6.5f else 9f
+                announce("ضربه‌ی سنگین باس آماده می‌شود", bossTelegraph + .2f)
+                addBurst(Balance.PATH.last(), Color(0xFFFF476F), 10)
+            }
+        }
+        if (coreHp <= 0) phase = EnginePhase.DEFEATED
     }
 
     private fun updateEnemies(dt: Float) {
@@ -203,9 +236,9 @@ class GameEngine(private val random: Random = Random(77)) {
                 addBurst(Balance.PLOTS[towers[target].plot], Color(0xFFC65FA2), 4)
             }
             if (updated.hp <= 0f) {
-                iterator.remove(); onKill(updated)
+                iterator.remove(); onKill(updated); enemyPool.recycle(updated)
             } else if (updated.progress >= 1f) {
-                iterator.remove()
+                iterator.remove(); enemyPool.recycle(updated)
                 val damage = if (updated.type == EnemyType.BOSS) 3 else if (updated.type == EnemyType.MINI_BOSS) 2 else Balance.enemyDamage(wave)
                 coreHp -= damage; combo = 0; screenShake = max(screenShake, if (damage >= 2) .18f else .08f)
                 addBurst(Balance.PATH.last(), Color(0xFFFF476F), 12)
@@ -230,7 +263,7 @@ class GameEngine(private val random: Random = Random(77)) {
                 towers[index] = tower.copy(cooldown = cooldown, upgradePulse = max(0f, tower.upgradePulse - dt * 2f)); continue
             }
             val targetPoint = positionOf(target.progress)
-            projectiles += Projectile(nextId++, tower.type, origin, targetPoint)
+            projectiles += projectilePool.obtain().copy(id = nextId++, towerType = tower.type, from = origin, to = targetPoint, progress = 0f)
             damageEnemy(target.id, Balance.towerDamage(tower), tower.type, targetPoint, tower.level)
             if (tower.type == TowerType.LIGHTNING) {
                 enemies.filter { it.id != target.id && distance(positionOf(it.progress), targetPoint) < .13f }.take(3)
@@ -262,11 +295,12 @@ class GameEngine(private val random: Random = Random(77)) {
         enemies[index] = updated
         addFloating("-${damage.toInt()}", at, towerType.color)
         addParticle(at, towerType.color, if (towerType == TowerType.CANNON) 1.8f else 1f)
+        if (damage >= 90f || target.type == EnemyType.BOSS) hitStop = max(hitStop, .035f)
         if (target.type == EnemyType.BOSS && nextPhase != target.bossPhase) {
             announce("فاز ${nextPhase} باس آغاز شد", 2.2f); addBurst(at, Color(0xFFFF4D6D), 18); screenShake = max(screenShake, .12f)
         }
         if (updated.hp <= 0f) {
-            enemies.removeAt(index); onKill(updated); return
+            enemies.removeAt(index); onKill(updated); enemyPool.recycle(updated); return
         }
         if (allowSplash && towerType == TowerType.CANNON) {
             enemies.filter { it.id != id && distance(positionOf(it.progress), at) < .115f }.map { it.id }.take(5)
@@ -327,7 +361,7 @@ class GameEngine(private val random: Random = Random(77)) {
             prepRemaining = prepRemaining.coerceAtLeast(0f), worldTime = elapsed, screenShake = screenShake,
             spawned = spawned, totalToSpawn = currentPlan?.units?.size ?: 0, isEndless = wave >= 301,
             bossName = boss?.bossName, bossHp = boss?.hp ?: 0f, bossMaxHp = boss?.maxHp ?: 0f,
-            bossPhase = boss?.bossPhase ?: 1, abilityRemaining = abilityCooldown, selectedPlot = selectedPlot,
+            bossPhase = boss?.bossPhase ?: 1, bossTelegraph = bossTelegraph.coerceAtLeast(0f), abilityRemaining = abilityCooldown, selectedPlot = selectedPlot,
             towers = towers.toList(), enemies = enemies.toList(), projectiles = projectiles.toList(),
             floatingTexts = floatingTexts.toList(), particles = particles.toList(), combo = combo,
             message = message.takeIf { messageTimer > 0f },

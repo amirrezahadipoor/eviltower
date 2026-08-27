@@ -112,7 +112,8 @@ private fun GameTopBar(snapshot: GameSnapshot, vm: GameViewModel) {
 @Composable
 private fun BossBar(snapshot: GameSnapshot) {
     Column(Modifier.fillMaxWidth().background(Color(0xFF291526)).padding(horizontal = 16.dp, vertical = 6.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-        Text("⚔ ${snapshot.bossName}", color = Gold, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+        Text("⚔ ${snapshot.bossName}  •  فاز ${fa(snapshot.bossPhase)}", color = Gold, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+        if (snapshot.bossTelegraph > 0f) Text("⚠ ضربه‌ی سنگین در ${fa(snapshot.bossTelegraph.format1())}", color = Danger, fontSize = 11.sp, fontWeight = FontWeight.Bold)
         Box(Modifier.fillMaxWidth().height(9.dp).background(Color(0xFF4B1F36), RoundedCornerShape(5.dp))) {
             Box(Modifier.fillMaxWidth((snapshot.bossHp / snapshot.bossMaxHp).coerceIn(0f, 1f)).height(9.dp).background(Danger, RoundedCornerShape(5.dp)))
         }
