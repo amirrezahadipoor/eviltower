@@ -141,7 +141,7 @@ private fun BuildPanel(snapshot: GameSnapshot, vm: GameViewModel) {
         Row(Modifier.fillMaxWidth().padding(horizontal = 10.dp), horizontalArrangement = Arrangement.spacedBy(7.dp), verticalAlignment = Alignment.CenterVertically) {
             EvilButton("☄ آتش ${if (snapshot.abilityRemaining > 0) fa(snapshot.abilityRemaining.toInt()) else "آماده"}", Modifier.weight(1f), Color(0xFF9E3C3A), enabled = snapshot.abilityRemaining <= 0f) { vm.inferno() }
             EvilButton("🛡 سپر ${if (snapshot.shieldCooldown > 0) fa(snapshot.shieldCooldown.toInt()) else "آماده"}", Modifier.weight(1f), Color(0xFF2F6B8A), enabled = snapshot.shieldCooldown <= 0f) { vm.shield() }
-            Text("کشتار ${fa(snapshot.enemiesDefeated)} • زنجیره ${fa(snapshot.combo)}", color = Color(0xFFBCAEC7), fontSize = 10.sp, modifier = Modifier.weight(1.15f), textAlign = TextAlign.Center)
+            Text("کشتار ${fa(snapshot.enemiesDefeated)} • زنجیره ${fa(snapshot.combo)}", color = if (snapshot.combo >= 10) Gold else Color(0xFFBCAEC7), fontSize = (10 + (snapshot.combo / 8).coerceAtMost(6)).sp, fontWeight = if (snapshot.combo >= 10) FontWeight.Bold else FontWeight.Normal, modifier = Modifier.weight(1.15f), textAlign = TextAlign.Center)
         }
     }
 }

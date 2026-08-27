@@ -302,7 +302,11 @@ class GameEngine(private val random: Random = Random(77)) {
             damageEnemy(target.id, Balance.towerDamage(tower), tower.type, targetPoint, tower.level)
             if (tower.type == TowerType.LIGHTNING) {
                 enemies.filter { it.id != target.id && distance(positionOf(it.progress), targetPoint) < .13f }.take(3)
-                    .forEach { chain -> damageEnemy(chain.id, Balance.towerDamage(tower) * .42f, tower.type, targetPoint, tower.level, false) }
+                    .forEach { chain ->
+                        val chainPoint = positionOf(chain.progress)
+                        projectiles += projectilePool.obtain().copy(id = nextId++, towerType = TowerType.LIGHTNING, from = targetPoint, to = chainPoint, progress = 0f)
+                        damageEnemy(chain.id, Balance.towerDamage(tower) * .42f, tower.type, chainPoint, tower.level, false)
+                    }
             }
             towers[index] = tower.copy(cooldown = Balance.towerInterval(tower), totalDamage = tower.totalDamage + Balance.towerDamage(tower).toLong(), upgradePulse = max(0f, tower.upgradePulse - dt * 2f))
         }

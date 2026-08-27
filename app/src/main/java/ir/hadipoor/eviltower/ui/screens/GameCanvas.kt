@@ -201,6 +201,8 @@ private fun DrawScope.drawEnemies(snapshot: GameSnapshot) {
         val p = base.copy(y = base.y + bob)
         val radius = when (enemy.type) { EnemyType.BOSS -> 24f; EnemyType.MINI_BOSS -> 18f; EnemyType.OGRE -> 15f; else -> 10f }
         if (enemy.hitFlash > 0f) drawCircle(Color.White.copy(alpha = .7f), radius + 5f, p)
+        if (enemy.slow > 0f) drawCircle(Color(0x8870D6FF), radius + 5f, p, style = Stroke(2f))
+        if (enemy.burn > 0f) drawCircle(Color(0x88FF5B4D), radius + 7f, p, style = Stroke(2f))
         when (enemy.type) {
             EnemyType.BAT -> { drawCircle(Color(0xFF8E65D1), radius, p); line(p.copy(x = p.x - 8, y = p.y - 2), p.copy(x = p.x - 22, y = p.y - 12), Color(0xFFC19BFF), 5f); line(p.copy(x = p.x + 8, y = p.y - 2), p.copy(x = p.x + 22, y = p.y - 12), Color(0xFFC19BFF), 5f) }
             EnemyType.WOLF -> { drawOval(Color(0xFF5A477F), topLeft = Offset(p.x - 14, p.y - 8), size = androidx.compose.ui.geometry.Size(28f, 16f)); drawCircle(Color(0xFFB8A3FF), 3f, p.copy(x = p.x + 8, y = p.y - 2)) }
