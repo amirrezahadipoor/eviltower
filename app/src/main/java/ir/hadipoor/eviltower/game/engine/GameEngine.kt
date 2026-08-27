@@ -303,13 +303,13 @@ class GameEngine(private val random: Random = Random(77)) {
         if (target.type == EnemyType.BOSS && nextPhase != target.bossPhase) {
             announce("فاز ${nextPhase} باس آغاز شد", 2.2f); addBurst(at, Color(0xFFFF4D6D), 18); screenShake = max(screenShake, .12f)
         }
-        if (updated.hp <= 0f) {
-            enemies.removeAt(index); onKill(updated); enemyPool.recycle(updated); return
-        }
+        val killed = updated.hp <= 0f
+        if (killed) { enemies.removeAt(index); enemyPool.recycle(updated) }
         if (allowSplash && towerType == TowerType.CANNON) {
             enemies.filter { it.id != id && distance(positionOf(it.progress), at) < .115f }.map { it.id }.take(5)
                 .forEach { splashId -> damageEnemy(splashId, rawDamage * .42f, towerType, at, sourceLevel, false) }
         }
+        if (killed) { onKill(updated); return }
     }
 
     private fun onKill(enemy: Enemy) {
