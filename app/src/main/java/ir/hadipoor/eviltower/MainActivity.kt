@@ -21,6 +21,16 @@ class MainActivity : ComponentActivity() {
         runCatching { bazaarBilling?.connect() }
         setContent { EvilTowerApp(viewModel) }
     }
+    override fun onPause() {
+        viewModel.audio.pauseMusic()
+        super.onPause()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (viewModel.profile.value.musicOn) viewModel.audio.startMusic()
+    }
+
     override fun onDestroy() {
         runCatching { bazaarBilling?.disconnect() }
         bazaarBilling = null
