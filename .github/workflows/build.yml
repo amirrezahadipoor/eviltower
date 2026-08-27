@@ -1,4 +1,4 @@
-name: Build APK
+name: تست و بسته‌بندی برج شیطانی
 
 on:
   push:
@@ -7,31 +7,20 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
-concurrency:
-  group: build-${{ github.ref }}
-  cancel-in-progress: true
-
 permissions:
   contents: write
 
 jobs:
-  build:
-    name: Build & test برج شیطانی
+  verify:
+    name: تست موتور بازی
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
-
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-
+      - uses: android-actions/setup-android@v3
       - name: Cache Gradle
         uses: actions/cache@v4
         with:
@@ -40,88 +29,59 @@ jobs:
             ~/.gradle/wrapper
           key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', 'gradle/libs.versions.toml', 'gradle/wrapper/gradle-wrapper.properties') }}
           restore-keys: gradle-${{ runner.os }}-
+      - run: chmod +x ./gradlew
+      - run: ./gradlew test --stacktrace
 
-      - name: Prepare release keystore
+  package:
+    name: APK نهایی برای کافه‌بازار
+    needs: verify
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - name: آماده‌سازی کلید انتشار
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
-          set -e
-          if [ -n "$KEYSTORE_BASE64" ]; then
-            echo "Using the repository release keystore from secrets."
-            echo "$KEYSTORE_BASE64" | base64 -d > eviltower-release.jks
-            echo "EVILTOWER_STORE_PASSWORD=$KEYSTORE_PASSWORD" >> $GITHUB_ENV
-            echo "EVILTOWER_KEY_ALIAS=$KEY_ALIAS" >> $GITHUB_ENV
-            echo "EVILTOWER_KEY_PASSWORD=$KEY_PASSWORD" >> $GITHUB_ENV
+          set -eu
+          if [ -n "${KEYSTORE_BASE64:-}" ]; then
+            echo "$KEYSTORE_BASE64" | base64 --decode > eviltower-release.jks
+            echo "storeFile=eviltower-release.jks" > keystore.properties
+            echo "storePassword=$KEYSTORE_PASSWORD" >> keystore.properties
+            echo "keyAlias=$KEY_ALIAS" >> keystore.properties
+            echo "keyPassword=$KEY_PASSWORD" >> keystore.properties
           else
-            echo "::warning::No KEYSTORE_BASE64 secret found - generating an EPHEMERAL keystore."
-            echo "::warning::The produced release APK installs fine but must be re-signed with the real"
-            echo "::warning::upload key before publishing on Cafe Bazaar (see README, section Signing)."
-            keytool -genkeypair -v -keystore eviltower-release.jks -alias eviltower \
-              -keyalg RSA -keysize 2048 -validity 10000 \
-              -storepass eviltower -keypass eviltower \
-              -dname "CN=Evil Tower, OU=Games, O=Hadipoor, L=Tehran, S=Tehran, C=IR"
-            echo "EVILTOWER_STORE_PASSWORD=eviltower" >> $GITHUB_ENV
-            echo "EVILTOWER_KEY_ALIAS=eviltower" >> $GITHUB_ENV
-            echo "EVILTOWER_KEY_PASSWORD=eviltower" >> $GITHUB_ENV
+            echo "::warning::کلید واقعی تنظیم نشده؛ کلید موقت برای آزمون ساخته می‌شود."
+            keytool -genkeypair -v -keystore eviltower-release.jks -alias eviltower -keyalg RSA -keysize 2048 -validity 10000 -storepass eviltower -keypass eviltower -dname "CN=Evil Tower, OU=Games, O=Hadipoor, L=Montreal, S=Quebec, C=CA"
+            printf 'storeFile=eviltower-release.jks\nstorePassword=eviltower\nkeyAlias=eviltower\nkeyPassword=eviltower\n' > keystore.properties
           fi
-          echo "EVILTOWER_STORE_FILE=eviltower-release.jks" >> $GITHUB_ENV
-
-      - name: Grant execute permission for gradlew
-        run: chmod +x ./gradlew
-
-      - name: Unit tests
-        run: ./gradlew test --stacktrace
-
-      - name: Build debug APK
-        run: ./gradlew assembleDebug --stacktrace
-
-      - name: Build release APK (Cafe Bazaar target)
-        run: ./gradlew assembleRelease --stacktrace
-
-      - name: Collect APKs
-        run: |
-          mkdir -p artifacts
-          cp app/build/outputs/apk/debug/*.apk artifacts/ 2>/dev/null || true
-          cp app/build/outputs/apk/release/*.apk artifacts/ 2>/dev/null || true
-          ls -lh artifacts
-
-      - name: Upload debug APK
-        uses: actions/upload-artifact@v4
+      - run: chmod +x ./gradlew
+      - run: ./gradlew assembleDebug assembleRelease --stacktrace
+      - uses: actions/upload-artifact@v4
         with:
           name: eviltower-debug-apk
           path: app/build/outputs/apk/debug/*.apk
-          if-no-files-found: error
-
-      - name: Upload release APK (Bazaar)
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: eviltower-release-apk
           path: app/build/outputs/apk/release/*.apk
-          if-no-files-found: error
-
-      - name: Publish APKs to the latest release
-        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+      - name: انتشار در Releases
+        if: github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: build-${{ github.run_number }}
-          name: برج شیطانی - build ${{ github.run_number }}
-          body: |
-            APK های خودکار ساخته‌شده از کامیت ${{ github.sha }}
-            * `app-debug.apk` — نسخه دیباگ برای نصب سریع
-            * `app-release.apk` — نسخه انتشار (کافه بازار)
-          files: artifacts/*.apk
-          draft: false
-          prerelease: false
+          tag_name: apk-${{ github.run_number }}
+          name: برج شیطانی — APK ${{ github.run_number }}
+          body: "خروجی‌های debug و release ساخته‌شده از کامیت ${{ github.sha }}"
+          files: |
+            app/build/outputs/apk/debug/*.apk
+            app/build/outputs/apk/release/*.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload unit test report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: unit-test-report
-          path: app/build/reports/tests/
-          if-no-files-found: ignore
