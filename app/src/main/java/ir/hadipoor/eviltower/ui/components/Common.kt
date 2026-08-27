@@ -1,6 +1,8 @@
 package ir.hadipoor.eviltower.ui.components
 
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.animateIntAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -34,6 +36,13 @@ import ir.hadipoor.eviltower.ui.theme.Ember
 import ir.hadipoor.eviltower.ui.theme.Gold
 import ir.hadipoor.eviltower.ui.theme.Panel
 import ir.hadipoor.eviltower.ui.theme.PanelLight
+import ir.hadipoor.eviltower.ui.fa
+
+@Composable
+fun AnimatedStatPill(label: String, value: Int, color: Color = Gold, modifier: Modifier = Modifier) {
+    val animated by animateIntAsState(value, animationSpec = tween(320), label = "counter")
+    StatPill(label, fa(animated), color, modifier)
+}
 
 @Composable
 fun StoneCard(modifier: Modifier = Modifier, content: @Composable () -> Unit) {

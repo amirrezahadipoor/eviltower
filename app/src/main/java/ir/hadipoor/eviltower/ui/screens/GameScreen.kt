@@ -47,6 +47,7 @@ import ir.hadipoor.eviltower.game.model.Tower
 import ir.hadipoor.eviltower.game.model.TowerType
 import ir.hadipoor.eviltower.ui.GameViewModel
 import ir.hadipoor.eviltower.ui.fa
+import ir.hadipoor.eviltower.ui.components.AnimatedStatPill
 import ir.hadipoor.eviltower.ui.components.EvilButton
 import ir.hadipoor.eviltower.ui.components.StatPill
 import ir.hadipoor.eviltower.ui.theme.Danger
@@ -103,9 +104,9 @@ private fun BoxScope.BossIntro(message: String) {
 @Composable
 private fun GameTopBar(snapshot: GameSnapshot, vm: GameViewModel) {
     Row(Modifier.fillMaxWidth().background(Panel).padding(horizontal = 10.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(7.dp)) {
-        StatPill("سکه", fa(snapshot.gold), Gold, Modifier.weight(1f))
-        StatPill("هسته", "${fa(snapshot.coreHp)} / ${fa(snapshot.coreMaxHp)}", if (snapshot.coreHp <= 5) Danger else Frost, Modifier.weight(1.15f))
-        StatPill("موج", "${fa(snapshot.wave)} / ${fa(snapshot.bestWave)}", Ember, Modifier.weight(1.1f))
+        AnimatedStatPill("سکه", snapshot.gold, Gold, Modifier.weight(1f))
+        AnimatedStatPill("هسته", snapshot.coreHp, if (snapshot.coreHp <= 5) Danger else Frost, Modifier.weight(1.15f))
+        StatPill("موج/رکورد", "${fa(snapshot.wave)} / ${fa(snapshot.bestWave)}", Ember, Modifier.weight(1.1f))
         EvilButton(if (snapshot.phase == EnginePhase.PAUSED) "ادامه" else "توقف", Modifier.width(70.dp), PanelLight) { vm.togglePause() }
     }
 }
