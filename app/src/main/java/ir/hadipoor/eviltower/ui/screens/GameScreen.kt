@@ -139,8 +139,9 @@ private fun BuildPanel(snapshot: GameSnapshot, vm: GameViewModel) {
         }
         Text("پیشرفت موج: ${fa(snapshot.spawned)} / ${fa(snapshot.totalToSpawn)}", color = Color(0xFFBCAEC7), fontSize = 11.sp, modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 2.dp), textAlign = TextAlign.Center)
         Row(Modifier.fillMaxWidth().padding(horizontal = 10.dp), horizontalArrangement = Arrangement.spacedBy(7.dp), verticalAlignment = Alignment.CenterVertically) {
-            EvilButton("☄ توان آتش ${if (snapshot.abilityRemaining > 0) fa(snapshot.abilityRemaining.toInt()) else "آماده"}", Modifier.weight(1f), Color(0xFF9E3C3A), enabled = snapshot.abilityRemaining <= 0f) { vm.inferno() }
-            Text("کشتار: ${fa(snapshot.enemiesDefeated)}  •  زنجیره: ${fa(snapshot.combo)}", color = Color(0xFFBCAEC7), fontSize = 12.sp, modifier = Modifier.weight(1.3f), textAlign = TextAlign.Center)
+            EvilButton("☄ آتش ${if (snapshot.abilityRemaining > 0) fa(snapshot.abilityRemaining.toInt()) else "آماده"}", Modifier.weight(1f), Color(0xFF9E3C3A), enabled = snapshot.abilityRemaining <= 0f) { vm.inferno() }
+            EvilButton("🛡 سپر ${if (snapshot.shieldCooldown > 0) fa(snapshot.shieldCooldown.toInt()) else "آماده"}", Modifier.weight(1f), Color(0xFF2F6B8A), enabled = snapshot.shieldCooldown <= 0f) { vm.shield() }
+            Text("کشتار ${fa(snapshot.enemiesDefeated)} • زنجیره ${fa(snapshot.combo)}", color = Color(0xFFBCAEC7), fontSize = 10.sp, modifier = Modifier.weight(1.15f), textAlign = TextAlign.Center)
         }
     }
 }

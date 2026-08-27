@@ -92,6 +92,7 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
     fun upgrade() { if (engine.upgradeSelected()) audio.playUpgrade(); snapshot.value = engine.snapshot() }
     fun sell() { engine.sellSelected(); snapshot.value = engine.snapshot() }
     fun inferno() { engine.activateInferno(); snapshot.value = engine.snapshot() }
+    fun shield() { engine.activateShield(); snapshot.value = engine.snapshot() }
 
     fun buyArcane() { viewModelScope.launch { repository.buyArcane(); notice.value = "برج جادوی اهریمنی باز شد" } }
     fun buyGoldBonus() { viewModelScope.launch { repository.buyStartingGold(); notice.value = "۸۰ سکه‌ی شروع اضافه شد" } }

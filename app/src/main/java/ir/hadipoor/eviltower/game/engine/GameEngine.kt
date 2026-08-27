@@ -45,6 +45,8 @@ class GameEngine(private val random: Random = Random(77)) {
     private var message: String? = null
     private var messageTimer = 0f
     private var abilityCooldown = 0f
+    private var shieldCooldown = 0f
+    private var shieldRemaining = 0f
     private var bossAttackCooldown = 7f
     private var bossTelegraph = 0f
     private var hitStop = 0f
@@ -67,7 +69,7 @@ class GameEngine(private val random: Random = Random(77)) {
         enemiesDefeated = 0; bossesDefeated = 0; goldEarned = 0; elapsed = 0f
         prepRemaining = Balance.PREP_SECONDS; spawnTimer = 0f; spawned = 0; combo = 0; nextId = 1
         selectedPlot = null; currentPlan = null; message = null; messageTimer = 0f
-        abilityCooldown = 0f; bossAttackCooldown = 7f; bossTelegraph = 0f; hitStop = 0f; screenShake = 0f; arcaneUnlocked = arcane; this.lowGraphics = lowGraphics; this.skin = skin
+        abilityCooldown = 0f; shieldCooldown = 0f; shieldRemaining = 0f; bossAttackCooldown = 7f; bossTelegraph = 0f; hitStop = 0f; screenShake = 0f; arcaneUnlocked = arcane; this.lowGraphics = lowGraphics; this.skin = skin
         particles.forEach(particlePool::recycle)
         enemies.forEach(enemyPool::recycle)
         projectiles.forEach(projectilePool::recycle)
@@ -131,6 +133,14 @@ class GameEngine(private val random: Random = Random(77)) {
         return true
     }
 
+    /** Defensive core shield: six seconds of readable invulnerability with a long cooldown. */
+    fun activateShield(): Boolean {
+        if (phase != EnginePhase.ACTIVE || shieldCooldown > 0f) return false
+        shieldRemaining = 6f; shieldCooldown = 30f
+        addBurst(Balance.PATH.last(), Color(0xFF70D6FF), 24)
+        return true
+    }
+
     fun update(dtRaw: Float) {
         if (phase == EnginePhase.PAUSED || phase == EnginePhase.DEFEATED) return
         val dt = dtRaw.coerceIn(0f, .05f)
@@ -140,6 +150,8 @@ class GameEngine(private val random: Random = Random(77)) {
         updateEffects(dt)
         if (hitStop > 0f) { hitStop = max(0f, hitStop - dt); return }
         abilityCooldown = max(0f, abilityCooldown - dt)
+        shieldCooldown = max(0f, shieldCooldown - dt)
+        shieldRemaining = max(0f, shieldRemaining - dt)
         when (phase) {
             EnginePhase.PREP -> { prepRemaining -= dt; if (prepRemaining <= 0f) beginWave() }
             EnginePhase.ACTIVE -> updateActive(dt)
@@ -201,9 +213,11 @@ class GameEngine(private val random: Random = Random(77)) {
         if (bossTelegraph > 0f) {
             bossTelegraph -= dt
             if (bossTelegraph <= 0f && enemies.any { it.id == boss.id }) {
-                coreHp -= if (boss.bossPhase >= 3) 2 else 1
-                screenShake = max(screenShake, .16f)
-                addBurst(Balance.PATH.last(), Color(0xFFFF476F), 16)
+                if (shieldRemaining <= 0f) {
+                    coreHp -= if (boss.bossPhase >= 3) 2 else 1
+                    screenShake = max(screenShake, .16f)
+                    addBurst(Balance.PATH.last(), Color(0xFFFF476F), 16)
+                } else addBurst(Balance.PATH.last(), Color(0xFF70D6FF), 14)
             }
         } else {
             bossAttackCooldown -= dt
@@ -246,8 +260,10 @@ class GameEngine(private val random: Random = Random(77)) {
             } else if (updated.progress >= 1f) {
                 iterator.remove(); enemyPool.recycle(updated)
                 val damage = if (updated.type == EnemyType.BOSS) 3 else if (updated.type == EnemyType.MINI_BOSS) 2 else Balance.enemyDamage(wave)
-                coreHp -= damage; combo = 0; screenShake = max(screenShake, if (damage >= 2) .18f else .08f)
-                addBurst(Balance.PATH.last(), Color(0xFFFF476F), 12)
+                if (shieldRemaining <= 0f) {
+                    coreHp -= damage; combo = 0; screenShake = max(screenShake, if (damage >= 2) .18f else .08f)
+                    addBurst(Balance.PATH.last(), Color(0xFFFF476F), 12)
+                } else addBurst(Balance.PATH.last(), Color(0xFF70D6FF), 12)
                 if (coreHp <= 0) phase = EnginePhase.DEFEATED
             } else iterator.set(updated)
         }
@@ -370,7 +386,8 @@ class GameEngine(private val random: Random = Random(77)) {
             prepRemaining = prepRemaining.coerceAtLeast(0f), worldTime = elapsed, screenShake = screenShake,
             spawned = spawned, totalToSpawn = currentPlan?.units?.size ?: 0, isEndless = wave >= 301,
             bossName = boss?.bossName, bossHp = boss?.hp ?: 0f, bossMaxHp = boss?.maxHp ?: 0f,
-            bossPhase = boss?.bossPhase ?: 1, bossTelegraph = bossTelegraph.coerceAtLeast(0f), abilityRemaining = abilityCooldown, selectedPlot = selectedPlot,
+            bossPhase = boss?.bossPhase ?: 1, bossTelegraph = bossTelegraph.coerceAtLeast(0f), abilityRemaining = abilityCooldown,
+            shieldRemaining = shieldRemaining, shieldCooldown = shieldCooldown, selectedPlot = selectedPlot,
             towers = towers.toList(), enemies = enemies.toList(), projectiles = projectiles.toList(),
             floatingTexts = floatingTexts.toList(), particles = particles.toList(), combo = combo,
             message = message.takeIf { messageTimer > 0f },
