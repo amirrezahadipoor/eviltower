@@ -4,6 +4,8 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
@@ -16,6 +18,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.IntSize
 import ir.hadipoor.eviltower.game.engine.Balance
 import ir.hadipoor.eviltower.game.model.Enemy
@@ -26,6 +29,9 @@ import ir.hadipoor.eviltower.game.model.Tower
 import ir.hadipoor.eviltower.game.model.TowerType
 import ir.hadipoor.eviltower.game.render.SpriteAnimation
 import ir.hadipoor.eviltower.game.render.SpriteState
+import ir.hadipoor.eviltower.game.render.SvgAssets
+import ir.hadipoor.eviltower.game.render.SvgRuntime
+import ir.hadipoor.eviltower.game.render.drawSvg
 import ir.hadipoor.eviltower.ui.theme.Acid
 import ir.hadipoor.eviltower.ui.theme.Danger
 import ir.hadipoor.eviltower.ui.theme.Gold
@@ -36,6 +42,11 @@ import kotlin.math.sin
 
 @Composable
 fun GameCanvas(snapshot: GameSnapshot, onPlotTap: (Int) -> Unit, modifier: Modifier = Modifier) {
+    val runtime = remember { SvgRuntime(LocalContext.current) }
+    val preload = remember {
+        TowerType.entries.map { SvgAssets.tower(it, 1) } + EnemyType.entries.flatMap { listOf(SvgAssets.enemy(it, 0), SvgAssets.enemy(it, 4)) }
+    }
+    LaunchedEffect(runtime) { runtime.prewarm(preload) }
     Canvas(
         modifier = modifier.fillMaxSize().pointerInput(snapshot.towers, snapshot.selectedPlot) {
             detectTapGestures { tap ->
@@ -59,8 +70,8 @@ fun GameCanvas(snapshot: GameSnapshot, onPlotTap: (Int) -> Unit, modifier: Modif
         drawRoad()
         drawTorches(snapshot.worldTime)
         drawCore(snapshot.worldTime, snapshot.bossTelegraph, snapshot.shieldRemaining)
-        drawPlots(snapshot)
-        drawEnemies(snapshot)
+        drawPlots(snapshot, runtime)
+        drawEnemies(snapshot, runtime)
         drawProjectiles(snapshot)
         drawEffects(snapshot)
     }
@@ -141,7 +152,7 @@ private fun DrawScope.drawCore(time: Float, telegraph: Float, shield: Float) {
     line(p.copy(y = p.y - 34), p.copy(y = p.y + 34), Color(0xFF91CEFF), 3f)
 }
 
-private fun DrawScope.drawPlots(snapshot: GameSnapshot) {
+private fun DrawScope.drawPlots(snapshot: GameSnapshot, runtime: SvgRuntime) {
     Balance.PLOTS.forEachIndexed { index, point ->
         val center = pos(point)
         val selected = snapshot.selectedPlot == index
@@ -155,7 +166,7 @@ private fun DrawScope.drawPlots(snapshot: GameSnapshot) {
             line(center.copy(x = center.x - 7), center.copy(x = center.x + 7), Color(0xFFB9A4B7), 2f)
             line(center.copy(y = center.y - 7), center.copy(y = center.y + 7), Color(0xFFB9A4B7), 2f)
         } else {
-            drawTower(tower, center, snapshot.worldTime, snapshot.skin)
+            drawTower(tower, center, snapshot.worldTime, snapshot.skin, runtime)
             if (tower.webbed > 0f) {
                 drawCircle(Color(0x99FFC1E3), 23f, center, style = Stroke(2f))
                 line(center + Offset(-16f, -16f), center + Offset(16f, 16f), Color(0x99FFC1E3), 1.5f)
@@ -165,7 +176,7 @@ private fun DrawScope.drawPlots(snapshot: GameSnapshot) {
     }
 }
 
-private fun DrawScope.drawTower(tower: Tower, center: Offset, time: Float, skin: Int) {
+private fun DrawScope.drawTower(tower: Tower, center: Offset, time: Float, skin: Int, runtime: SvgRuntime) {
     val tier = (tower.level - 1) / 10
     val detail = (tower.level - 1) % 10
     val color = if (skin == 1) when (tower.type) {
@@ -193,14 +204,20 @@ private fun DrawScope.drawTower(tower: Tower, center: Offset, time: Float, skin:
     }
     repeat(tier.coerceAtMost(6)) { i -> drawCircle(Gold.copy(alpha = .7f), 2.2f, center + Offset(-10f + i * 4f, 20f)) }
     repeat(detail / 3) { i -> drawCircle(Color.White.copy(alpha = .45f), 1.5f, center + Offset(-8f + i * 8f, -24f)) }
+    // The editable tier SVG is overlaid at low alpha so the procedural outline remains readable.
+    drawSvg(runtime, SvgAssets.tower(tower.type, tower.level), center, 48f + tier * 2f, alpha = .34f, rotation = tower.attackPulse * sway)
 }
 
-private fun DrawScope.drawEnemies(snapshot: GameSnapshot) {
+private fun DrawScope.drawEnemies(snapshot: GameSnapshot, runtime: SvgRuntime) {
     snapshot.enemies.forEach { enemy ->
         val base = pos(positionOf(enemy.progress))
         val bob = SpriteAnimation.sample(if (enemy.flying) SpriteState.MOVE else SpriteState.IDLE, snapshot.worldTime, enemy.id).bob * if (enemy.flying) 1.6f else 1f
         val p = base.copy(y = base.y + bob)
         val radius = when (enemy.type) { EnemyType.BOSS -> 24f; EnemyType.MINI_BOSS -> 18f; EnemyType.OGRE -> 15f; else -> 10f }
+        val state = if (enemy.hitFlash > 0f) SpriteState.HIT else if (enemy.type == EnemyType.BOSS && snapshot.bossTelegraph > 0f) SpriteState.ATTACK else SpriteState.MOVE
+        val motion = SpriteAnimation.sample(state, snapshot.worldTime, enemy.id)
+        val variant = when (enemy.type) { EnemyType.BOSS, EnemyType.MINI_BOSS -> enemy.bossDesign % 3 else -> if (enemy.elite) 4 + enemy.id % 5 else enemy.id % 4 }
+        drawSvg(runtime, SvgAssets.enemy(enemy.type, variant), p, radius * 2.5f * motion.scale, alpha = if (enemy.stealth) .22f else .36f, rotation = motion.tilt)
         if (enemy.hitFlash > 0f) drawCircle(Color.White.copy(alpha = .7f), radius + 5f, p)
         if (enemy.slow > 0f) drawCircle(Color(0x8870D6FF), radius + 5f, p, style = Stroke(2f))
         if (enemy.burn > 0f) drawCircle(Color(0x88FF5B4D), radius + 7f, p, style = Stroke(2f))
