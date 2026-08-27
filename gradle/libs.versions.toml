@@ -9,6 +9,7 @@ datastore = "1.1.1"
 junit = "4.13.2"
 androidxJunit = "1.2.1"
 espresso = "3.6.1"
+poolakey = "2.2.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
