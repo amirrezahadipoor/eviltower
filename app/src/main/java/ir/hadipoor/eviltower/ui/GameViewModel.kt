@@ -58,6 +58,7 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
             var previousCore = snapshot.value.coreHp
             var previousBoss: String? = null
             var previousWave = snapshot.value.wave
+            var previousGems = snapshot.value.gems
             while (isActive && screen.value == AppScreen.GAME) {
                 delay(16)
                 engine.update(1f / 60f)
@@ -66,13 +67,16 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
                 if (current.wave != previousWave || current.bossName != previousBoss) audio.setIntensity(current.wave, current.bossName != null)
                 if (current.projectiles.size > previousProjectiles) audio.playFire()
                 if (current.enemiesDefeated > previousKills) { audio.playDeath(); audio.playCoin() }
-                if (current.coreHp < previousCore) audio.playHit()
+                if (current.wave > previousWave) audio.playVictory()
+                if (current.gems > previousGems) audio.playGem()
+                if (current.coreHp < previousCore) { audio.playHit(); if (current.coreHp <= 5) audio.playCoreAlarm() }
                 if (current.bossName != null && current.bossName != previousBoss) audio.playBoss()
                 previousProjectiles = current.projectiles.size
                 previousKills = current.enemiesDefeated
                 previousCore = current.coreHp
                 previousBoss = current.bossName
                 previousWave = current.wave
+                previousGems = current.gems
                 if (current.phase == EnginePhase.DEFEATED) {
                     saveResult()
                     delay(420)
