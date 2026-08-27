@@ -1,6 +1,13 @@
 package ir.hadipoor.eviltower.ui.screens
 
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.rememberTransformableState
+import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,9 +24,15 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
@@ -47,11 +60,19 @@ import kotlin.math.sin
 @Composable
 fun GameScreen(vm: GameViewModel) {
     val snapshot = vm.snapshot.value
+    var mapScale by remember { mutableFloatStateOf(1f) }
+    var mapOffset by remember { mutableStateOf(Offset.Zero) }
+    val mapTransform = rememberTransformableState { zoom, pan, _ ->
+        mapScale = (mapScale * zoom).coerceIn(1f, 2.4f)
+        mapOffset += pan
+    }
     Box(Modifier.fillMaxSize().background(Night)) {
         Column(Modifier.fillMaxSize().graphicsLayer { translationX = sin(snapshot.worldTime * 40f) * snapshot.screenShake * 32f }) {
             GameTopBar(snapshot, vm)
             if (snapshot.bossName != null) BossBar(snapshot)
-            GameCanvas(snapshot, onPlotTap = { vm.selectPlot(it) }, modifier = Modifier.weight(1f).fillMaxWidth())
+            GameCanvas(snapshot, onPlotTap = { vm.selectPlot(it) }, modifier = Modifier.weight(1f).fillMaxWidth().transformable(mapTransform).graphicsLayer {
+                scaleX = mapScale; scaleY = mapScale; translationX = mapOffset.x; translationY = mapOffset.y
+            })
             if (snapshot.message != null) {
                 Box(Modifier.fillMaxWidth().background(Color(0xDD6D294F)).padding(7.dp), contentAlignment = Alignment.Center) {
                     Text(snapshot.message, color = Gold, fontWeight = FontWeight.Bold)
@@ -63,6 +84,18 @@ fun GameScreen(vm: GameViewModel) {
         if (snapshot.phase == EnginePhase.PREP && snapshot.prepRemaining > 0f) {
             Text("موج بعدی در ${fa(snapshot.prepRemaining.toInt() + 1)}", color = Gold, fontSize = 18.sp, fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.Center).background(Color(0xCC171020), RoundedCornerShape(15.dp)).padding(horizontal = 18.dp, vertical = 10.dp))
         }
+        if (snapshot.message?.startsWith("هشدار باس") == true) BossIntro(snapshot.message)
+    }
+}
+
+@Composable
+private fun BossIntro(message: String) {
+    val transition = rememberInfiniteTransition(label = "boss-intro")
+    val pulse by transition.animateFloat(.92f, 1.08f, infiniteRepeatable(tween(460), RepeatMode.Reverse), label = "boss-pulse")
+    Column(Modifier.align(Alignment.Center).graphicsLayer { scaleX = pulse; scaleY = pulse }.background(Color(0xEE35152F), RoundedCornerShape(22.dp)).padding(horizontal = 28.dp, vertical = 18.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+        Text("⚔", color = Danger, fontSize = 38.sp)
+        Text(message, color = Gold, fontSize = 19.sp, fontWeight = FontWeight.Black, textAlign = TextAlign.Center)
+        Text("حمله‌ی سنگین را بخوان و دفاع را بچین", color = Color.White, fontSize = 12.sp)
     }
 }
 

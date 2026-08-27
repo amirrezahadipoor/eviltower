@@ -52,9 +52,10 @@ fun GameCanvas(snapshot: GameSnapshot, onPlotTap: (Int) -> Unit, modifier: Modif
     ) {
         drawRect(Brush.verticalGradient(listOf(Color(0xFF181227), Color(0xFF090711))))
         drawStars()
+        drawFog(snapshot.wave, snapshot.worldTime)
         drawTowerSource(snapshot.wave, snapshot.worldTime)
         drawRoad()
-        drawCore()
+        drawCore(snapshot.worldTime)
         drawPlots(snapshot)
         drawEnemies(snapshot)
         drawProjectiles(snapshot)
@@ -72,6 +73,14 @@ private fun DrawScope.pos(x: Float, y: Float): Offset = Offset(x * size.width, y
 private fun DrawScope.drawStars() {
     val stars = listOf(.08f to .12f, .21f to .08f, .31f to .20f, .49f to .08f, .76f to .11f, .89f to .25f, .15f to .32f, .58f to .26f, .94f to .46f)
     stars.forEachIndexed { index, pair -> drawCircle(Color(0x88D7C8F0), 1.2f + index % 2, pos(pair.first, pair.second)) }
+}
+
+private fun DrawScope.drawFog(wave: Int, time: Float) {
+    val intensity = (.10f + (wave.coerceAtMost(300) / 300f) * .22f)
+    val drift = sin(time * .18f) * size.width * .04f
+    drawCircle(Color(0xFF5CA58A).copy(alpha = intensity), size.width * .25f, pos(.88f + drift / size.width, .22f))
+    drawCircle(Color(0xFF5CA58A).copy(alpha = intensity * .7f), size.width * .20f, pos(.76f + drift / size.width, .54f))
+    drawCircle(Color(0xFF49365F).copy(alpha = intensity), size.width * .28f, pos(.15f - drift / size.width, .76f))
 }
 
 private fun DrawScope.drawTowerSource(wave: Int, time: Float) {
@@ -102,11 +111,12 @@ private fun DrawScope.drawRoad() {
     points.forEach { drawCircle(Color(0x226B4F5A), 18f, it) }
 }
 
-private fun DrawScope.drawCore() {
+private fun DrawScope.drawCore(time: Float) {
     val p = pos(Balance.PATH.last())
-    drawCircle(Color(0x334C8DFF), 42f, p)
-    drawCircle(Color(0xFF293C69), 27f, p)
-    drawCircle(Color(0xFF69B6FF), 17f, p)
+    val pulse = 1f + sin(time * 3f) * .08f
+    drawCircle(Color(0x334C8DFF), 42f * pulse, p)
+    drawCircle(Color(0xFF293C69), 27f * pulse, p)
+    drawCircle(Color(0xFF69B6FF), 17f * pulse, p)
     drawCircle(Color(0xFFD9F4FF), 6f, p)
     line(p.copy(x = p.x - 34), p.copy(x = p.x + 34), Color(0xFF91CEFF), 3f)
     line(p.copy(y = p.y - 34), p.copy(y = p.y + 34), Color(0xFF91CEFF), 3f)
@@ -125,7 +135,14 @@ private fun DrawScope.drawPlots(snapshot: GameSnapshot) {
         if (tower == null) {
             line(center.copy(x = center.x - 7), center.copy(x = center.x + 7), Color(0xFFB9A4B7), 2f)
             line(center.copy(y = center.y - 7), center.copy(y = center.y + 7), Color(0xFFB9A4B7), 2f)
-        } else drawTower(tower, center, snapshot.worldTime)
+        } else {
+            drawTower(tower, center, snapshot.worldTime)
+            if (tower.webbed > 0f) {
+                drawCircle(Color(0x99FFC1E3), 23f, center, style = Stroke(2f))
+                line(center + Offset(-16f, -16f), center + Offset(16f, 16f), Color(0x99FFC1E3), 1.5f)
+                line(center + Offset(16f, -16f), center + Offset(-16f, 16f), Color(0x99FFC1E3), 1.5f)
+            }
+        }
     }
 }
 

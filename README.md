@@ -36,7 +36,7 @@ app/src/main/java/ir/hadipoor/eviltower/
 ├── game/engine/GameConfig.kt     فرمول‌های موج/اقتصاد/ارتقا و نقشه‌ی ثابت
 ├── game/engine/GameEngine.kt     حلقه‌ی مستقل Kotlin: spawn، مسیر، هدف‌گیری، آسیب و باس
 ├── game/engine/ObjectPool.kt     پایه‌ی pool برای transientهای پرتعداد
-├── ui/GameViewModel.kt           MVVM، حلقه‌ی ۶۰fps، شروع/پایان دور و ذخیره‌ی نتیجه
+├── ui/GameViewModel.kt           MVVM، حلقه‌ی ۶۰fps با fixed timestep، شروع/پایان دور و ذخیره‌ی نتیجه
 ├── ui/screens/GameCanvas.kt      رندر برداری Canvas، برج، دشمن، جاده، ذرات و پرتابه
 ├── ui/screens/GameScreen.kt      HUD، ساخت، ارتقا، فروش، توان آتش و توقف
 ├── ui/screens/MetaScreens.kt     فروشگاه، دستاوردها، رکوردها، تنظیمات و نتیجه
@@ -93,10 +93,11 @@ app/src/main/java/ir/hadipoor/eviltower/
 `tools/generate_vector_assets.py` برای هر ۷ برج، ۱۰ tier و برای خانواده‌ها variantهای editable
 می‌سازد. رندرر با tier/level اندازه، هاله، gem/rune و جزئیات را پارامتریک می‌کند.
 
-پیاده‌سازی‌شده: نقشه‌ی پویا و برج شیطانی glowing، جاده و ۱۲ plot، دشمن‌های silhouette-متفاوت،
-HP bar، پرتابه‌های رنگی، hit flash، damage number، gold fly-style feedback متنی، ذرات مرگ و ارتقا،
-combo، health bar باس، هشدار باس، countdown، توان آتش با cooldown، رنگ‌بندی تاریک، فونت Vazirmatn
-محلی و RTL. تعداد ذرات با pool آماده‌ی گسترش است تا در فاز بی‌پایان فشار حافظه کنترل شود.
+پیاده‌سازی‌شده: نقشه‌ی پویا و برج شیطانی glowing، مه متحرک، جاده و ۱۲ plot، enemy bob و stealth،
+HP bar، arrow/fire/ice/cannon/arcane projectile، lightning chain، hit flash، damage number،
+ذرات مرگ و ارتقا، combo، health bar و phase باس، هشدار باس، countdown، range indicator،
+توان آتش با cooldown، لرزش دوربین، pinch-to-zoom/pan، دکمه‌ی bounce، رنگ‌بندی تاریک، فونت
+Vazirmatn محلی و RTL. ذرات با pool بازیافت می‌شوند تا در فاز بی‌پایان فشار حافظه کنترل شود.
 موسیقی زمینه‌ی loop و ۱۴ SFX با `tools/generate_audio.py` رویه‌ای و بدون فایل شخص ثالث ساخته می‌شوند.
 
 ## ذخیره‌سازی و فروشگاه
