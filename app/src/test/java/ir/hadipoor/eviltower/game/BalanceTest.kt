@@ -24,6 +24,12 @@ class BalanceTest {
         assertTrue(Balance.wavePlan(10000).units.isNotEmpty())
     }
 
+    @Test fun `armor and stealth give arcane a meaningful niche`() {
+        assertTrue(Balance.armorMultiplier(EnemyType.SKELETON, TowerType.ARCHER, 1) < 1f)
+        assertTrue(Balance.armorMultiplier(EnemyType.SKELETON, TowerType.ARCANE, 1) == 1f)
+        assertTrue(Balance.armorMultiplier(EnemyType.WRAITH, TowerType.ARCHER, 1, stealth = true) < 1f)
+    }
+
     @Test fun `adjacent scaling is smooth and upgrade costs grow`() {
         val ratio = Balance.regularHp(101) / Balance.regularHp(100)
         assertTrue(ratio in 1.03f..1.06f)

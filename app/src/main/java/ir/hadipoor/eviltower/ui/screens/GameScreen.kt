@@ -105,7 +105,7 @@ private fun BoxScope.BossIntro(message: String) {
 private fun GameTopBar(snapshot: GameSnapshot, vm: GameViewModel) {
     Row(Modifier.fillMaxWidth().background(Panel).padding(horizontal = 10.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(7.dp)) {
         AnimatedStatPill("سکه", snapshot.gold, Gold, Modifier.weight(1f))
-        AnimatedStatPill("هسته", snapshot.coreHp, if (snapshot.coreHp <= 5) Danger else Frost, Modifier.weight(1.15f))
+        StatPill("هسته", "${fa(snapshot.coreHp)} / ${fa(snapshot.coreMaxHp)}", if (snapshot.coreHp <= 5) Danger else Frost, Modifier.weight(1.15f))
         StatPill("موج/رکورد", "${fa(snapshot.wave)} / ${fa(snapshot.bestWave)}", Ember, Modifier.weight(1.1f))
         EvilButton(if (snapshot.phase == EnginePhase.PAUSED) "ادامه" else "توقف", Modifier.width(70.dp), PanelLight) { vm.togglePause() }
     }
