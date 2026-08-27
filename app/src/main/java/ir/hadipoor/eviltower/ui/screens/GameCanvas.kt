@@ -24,6 +24,8 @@ import ir.hadipoor.eviltower.game.model.GameSnapshot
 import ir.hadipoor.eviltower.game.model.Point
 import ir.hadipoor.eviltower.game.model.Tower
 import ir.hadipoor.eviltower.game.model.TowerType
+import ir.hadipoor.eviltower.game.render.SpriteAnimation
+import ir.hadipoor.eviltower.game.render.SpriteState
 import ir.hadipoor.eviltower.ui.theme.Acid
 import ir.hadipoor.eviltower.ui.theme.Danger
 import ir.hadipoor.eviltower.ui.theme.Gold
@@ -167,7 +169,7 @@ private fun DrawScope.drawTower(tower: Tower, center: Offset, time: Float) {
     val detail = (tower.level - 1) % 10
     val color = tower.type.color
     val pulse = 1f + (tower.upgradePulse * .16f)
-    val sway = sin(time * 2.6f + tower.id) * 3f
+    val sway = SpriteAnimation.sample(SpriteState.IDLE, time, tower.id).tilt * 2f
     drawCircle(color.copy(alpha = .10f + tier * .012f), (23f + tier * 2f) * pulse, center)
     drawCircle(StoneDark, 16f * pulse, center.copy(y = center.y + 8f))
     round(color.copy(alpha = .75f), Rect(center.x - (8 + tier) * pulse, center.y - 13 * pulse, center.x + (8 + tier) * pulse, center.y + 12 * pulse), 4f)
@@ -189,7 +191,7 @@ private fun DrawScope.drawTower(tower: Tower, center: Offset, time: Float) {
 private fun DrawScope.drawEnemies(snapshot: GameSnapshot) {
     snapshot.enemies.forEach { enemy ->
         val base = pos(positionOf(enemy.progress))
-        val bob = sin(snapshot.worldTime * (if (enemy.flying) 6f else 3f) + enemy.id) * if (enemy.flying) 5f else 2f
+        val bob = SpriteAnimation.sample(if (enemy.flying) SpriteState.MOVE else SpriteState.IDLE, snapshot.worldTime, enemy.id).bob * if (enemy.flying) 1.6f else 1f
         val p = base.copy(y = base.y + bob)
         val radius = when (enemy.type) { EnemyType.BOSS -> 24f; EnemyType.MINI_BOSS -> 18f; EnemyType.OGRE -> 15f; else -> 10f }
         if (enemy.hitFlash > 0f) drawCircle(Color.White.copy(alpha = .7f), radius + 5f, p)
