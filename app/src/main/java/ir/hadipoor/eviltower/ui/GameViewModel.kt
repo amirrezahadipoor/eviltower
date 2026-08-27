@@ -91,8 +91,8 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
     fun build(type: TowerType) { if (engine.buildTower(type)) audio.playUpgrade(); snapshot.value = engine.snapshot() }
     fun upgrade() { if (engine.upgradeSelected()) audio.playUpgrade(); snapshot.value = engine.snapshot() }
     fun sell() { engine.sellSelected(); snapshot.value = engine.snapshot() }
-    fun inferno() { engine.activateInferno(); snapshot.value = engine.snapshot() }
-    fun shield() { engine.activateShield(); snapshot.value = engine.snapshot() }
+    fun inferno() { if (engine.activateInferno()) audio.playFire(); snapshot.value = engine.snapshot() }
+    fun shield() { if (engine.activateShield()) audio.playUpgrade(); snapshot.value = engine.snapshot() }
 
     fun buyArcane() { viewModelScope.launch { repository.buyArcane(); notice.value = "برج جادوی اهریمنی باز شد" } }
     fun buyGoldBonus() { viewModelScope.launch { repository.buyStartingGold(); notice.value = "۸۰ سکه‌ی شروع اضافه شد" } }

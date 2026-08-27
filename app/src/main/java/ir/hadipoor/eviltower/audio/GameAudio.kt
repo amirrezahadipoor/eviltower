@@ -6,10 +6,12 @@ import android.media.MediaPlayer
 import android.media.SoundPool
 import ir.hadipoor.eviltower.R
 
-/** Local audio: a looping tension bed plus 14 procedural SFX. */
+/** Three loopable stems (base, tension, boss) plus local SFX, mixed without network dependencies. */
 class GameAudio(context: Context) {
     private var soundVolume = .7f
     private var musicVolume = .22f
+    private var lastWave = 1
+    private var lastBossFight = false
     private val pool = SoundPool.Builder().setMaxStreams(8).setAudioAttributes(
         AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_GAME).setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build()
     ).build()
@@ -19,15 +21,26 @@ class GameAudio(context: Context) {
     private val upgrade = pool.load(context, R.raw.sfx_powerup, 1)
     private val death = pool.load(context, R.raw.sfx_enemy_death, 1)
     private val coin = pool.load(context, R.raw.sfx_coin, 1)
-    private val music = MediaPlayer.create(context, R.raw.music_tower)?.apply { isLooping = true; setVolume(musicVolume, musicVolume) }
-    fun startMusic() { runCatching { if (music?.isPlaying == false) music?.start() } }
-    fun pauseMusic() { runCatching { if (music?.isPlaying == true) music?.pause() } }
+    private val baseMusic = stem(context, R.raw.music_base)
+    private val tensionMusic = stem(context, R.raw.music_tension)
+    private val bossMusic = stem(context, R.raw.music_boss)
+
+    private fun stem(context: Context, resource: Int): MediaPlayer? = MediaPlayer.create(context, resource)?.apply { isLooping = true }
+    private fun each(action: (MediaPlayer) -> Unit) { listOfNotNull(baseMusic, tensionMusic, bossMusic).forEach(action) }
+    fun startMusic() { runCatching { each { if (!it.isPlaying) it.start() } } }
+    fun pauseMusic() { runCatching { each { if (it.isPlaying) it.pause() } } }
     fun setSoundVolume(value: Float) { soundVolume = value.coerceIn(0f, 1f) }
-    fun setMusicVolume(value: Float) { musicVolume = value.coerceIn(0f, 1f); music?.setVolume(musicVolume, musicVolume) }
-    fun setIntensity(wave: Int, boss: Boolean) {
-        val gain = (1f + (wave.coerceAtMost(300) / 300f) * .24f + if (boss) .18f else 0f).coerceAtMost(1.5f)
-        music?.setVolume((musicVolume * gain).coerceAtMost(1f), (musicVolume * gain).coerceAtMost(1f))
-        runCatching { music?.let { it.setPlaybackParams(it.playbackParams.setSpeed(if (boss) 1.04f else 1f)) } }
+    fun setMusicVolume(value: Float) { musicVolume = value.coerceIn(0f, 1f); setIntensity(lastWave, lastBossFight) }
+    fun setIntensity(wave: Int, bossFight: Boolean) {
+        lastWave = wave; lastBossFight = bossFight
+        val progress = (wave.coerceAtMost(300) / 300f)
+        val base = (musicVolume * (1f - progress * .18f)).coerceAtLeast(0f)
+        val tension = musicVolume * (.06f + progress * .42f)
+        val bossGain = if (bossFight) musicVolume * .72f else 0f
+        baseMusic?.setVolume(base, base)
+        tensionMusic?.setVolume(tension, tension)
+        bossMusic?.setVolume(bossGain, bossGain)
+        runCatching { bossMusic?.let { it.setPlaybackParams(it.playbackParams.setSpeed(if (bossFight) 1.04f else 1f)) } }
     }
     private fun play(id: Int, amount: Float, rate: Float = 1f) = pool.play(id, amount * soundVolume, amount * soundVolume, 1, 0, rate)
     fun playHit() = play(hit, 0.45f)
@@ -36,5 +49,5 @@ class GameAudio(context: Context) {
     fun playUpgrade() = play(upgrade, .6f)
     fun playDeath() = play(death, .5f)
     fun playCoin() = play(coin, .35f)
-    fun release() { runCatching { music?.release() }; pool.release() }
+    fun release() { runCatching { each { it.release() } }; pool.release() }
 }

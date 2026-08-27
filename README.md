@@ -100,7 +100,7 @@ HP bar، arrow/fire/ice/cannon/arcane projectile، lightning chain، hit flash،
 ذرات مرگ و ارتقا، combo، health bar و phase باس، هشدار باس، countdown، range indicator،
 توان آتش و سپر هسته با cooldown، telegraph ضربه‌ی باس، لرزش دوربین، pinch-to-zoom/pan، دکمه‌ی bounce، رنگ‌بندی تاریک، فونت
 Vazirmatn محلی و RTL. ذرات با pool بازیافت می‌شوند تا در فاز بی‌پایان فشار حافظه کنترل شود.
-موسیقی زمینه‌ی loop و ۱۴ SFX با `tools/generate_audio.py` رویه‌ای و بدون فایل شخص ثالث ساخته می‌شوند.
+موسیقی زمینه در سه stem هماهنگ (`base`, `tension`, `boss`) loop می‌شود و با موج/باس mix آن تغییر می‌کند؛ ۱۴ SFX با `tools/generate_audio.py` رویه‌ای و بدون فایل شخص ثالث ساخته می‌شوند. تولید stemها با `tools/generate_audio_layers.py` انجام می‌شود.
 
 ## ذخیره‌سازی و فروشگاه
 
