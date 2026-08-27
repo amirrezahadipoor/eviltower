@@ -18,7 +18,7 @@ object Balance {
     const val HP_GROWTH = 1.03
     const val SPEED_GROWTH = 1.0018
     const val DAMAGE_GROWTH = 1.018
-    const val TOWER_DAMAGE_GROWTH = 1.075
+    const val TOWER_DAMAGE_GROWTH = 1.07
     const val TOWER_COST_GROWTH = 1.017
 
     fun regularHp(wave: Int): Float = 24f * HP_GROWTH.pow((wave - 1).coerceAtLeast(0).toDouble()).toFloat()

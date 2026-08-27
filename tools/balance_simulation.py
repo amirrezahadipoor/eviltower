@@ -9,7 +9,7 @@ from math import ceil, floor, pow
 
 HP_GROWTH = 1.03
 SPEED_GROWTH = 1.0018
-TOWER_DAMAGE_GROWTH = 1.075
+TOWER_DAMAGE_GROWTH = 1.07
 TOWER_COST_GROWTH = 1.017
 
 # cost, damage, interval, base speed for a representative enemy family
