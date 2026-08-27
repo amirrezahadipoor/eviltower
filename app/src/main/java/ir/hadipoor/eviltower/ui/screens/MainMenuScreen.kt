@@ -30,6 +30,7 @@ import ir.hadipoor.eviltower.ui.fa
 import ir.hadipoor.eviltower.ui.components.EvilButton
 import ir.hadipoor.eviltower.ui.components.ScreenTitle
 import ir.hadipoor.eviltower.ui.components.StatPill
+import ir.hadipoor.eviltower.ui.components.StoneCard
 import ir.hadipoor.eviltower.ui.theme.Ember
 import ir.hadipoor.eviltower.ui.theme.Gold
 import ir.hadipoor.eviltower.ui.theme.Night
@@ -51,6 +52,10 @@ fun MainMenuScreen(profile: ProfileData, vm: GameViewModel, onExit: () -> Unit) 
                 drawCircle(Ember, 22f, c.copy(y = c.y - 6)); drawCircle(Color(0xFFFFEBD6), 5f, c.copy(y = c.y - 6))
             }
             Spacer(Modifier.height(4.dp))
+            StoneCard(Modifier.fillMaxWidth()) {
+                Text("آخرین هسته‌ی آزاد هنوز می‌تپد. برج شیطانی هرگز از فرستادن سپاه دست نمی‌کشد؛ هر موج را نگه دار، طلا جمع کن و برای سقوط اجتناب‌ناپذیر آماده شو.", color = Color(0xFFCFC3D9), fontSize = 12.sp, textAlign = TextAlign.Center, modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp))
+            }
+            Spacer(Modifier.height(12.dp))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)) {
                 StatPill("رکورد", fa(profile.bestWave), Gold)
                 StatPill("سکه", fa(profile.metaCoins), Gold)
