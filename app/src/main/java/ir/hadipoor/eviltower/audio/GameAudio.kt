@@ -24,6 +24,11 @@ class GameAudio(context: Context) {
     fun pauseMusic() { runCatching { if (music?.isPlaying == true) music?.pause() } }
     fun setSoundVolume(value: Float) { soundVolume = value.coerceIn(0f, 1f) }
     fun setMusicVolume(value: Float) { musicVolume = value.coerceIn(0f, 1f); music?.setVolume(musicVolume, musicVolume) }
+    fun setIntensity(wave: Int, boss: Boolean) {
+        val gain = (1f + (wave.coerceAtMost(300) / 300f) * .24f + if (boss) .18f else 0f).coerceAtMost(1.5f)
+        music?.setVolume((musicVolume * gain).coerceAtMost(1f), (musicVolume * gain).coerceAtMost(1f))
+        runCatching { music?.let { it.setPlaybackParams(it.playbackParams.setSpeed(if (boss) 1.04f else 1f)) } }
+    }
     private fun play(id: Int, amount: Float, rate: Float = 1f) = pool.play(id, amount * soundVolume, amount * soundVolume, 1, 0, rate)
     fun playHit() = play(hit, 0.45f)
     fun playFire() = play(fire, 0.55f)

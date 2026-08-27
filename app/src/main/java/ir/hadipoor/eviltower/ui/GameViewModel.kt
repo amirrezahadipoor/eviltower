@@ -62,6 +62,7 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
                 engine.update(1f / 60f)
                 snapshot.value = engine.snapshot()
                 val current = snapshot.value
+                audio.setIntensity(current.wave, current.bossName != null)
                 if (current.projectiles.size > previousProjectiles) audio.playFire()
                 if (current.enemiesDefeated > previousKills) { audio.playDeath(); audio.playCoin() }
                 if (current.coreHp < previousCore) audio.playHit()
