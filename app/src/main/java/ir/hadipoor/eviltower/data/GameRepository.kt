@@ -3,13 +3,16 @@ package ir.hadipoor.eviltower.data
 import android.content.Context
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import ir.hadipoor.eviltower.game.model.GameSnapshot
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
+import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -56,7 +59,9 @@ class GameRepository(private val context: Context) {
         val lowGraphics = booleanPreferencesKey("low_graphics")
     }
 
-    val profile: Flow<ProfileData> = context.profileStore.data.map { p ->
+    val profile: Flow<ProfileData> = context.profileStore.data
+        .catch { error -> if (error is IOException) emit(emptyPreferences()) else throw error }
+        .map { p ->
         ProfileData(
             metaCoins = p[K.coins] ?: 0,
             gems = p[K.gems] ?: 40,
