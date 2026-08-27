@@ -6,16 +6,20 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.core.view.WindowCompat
+import ir.hadipoor.eviltower.monetization.BazaarBillingProvider
 import ir.hadipoor.eviltower.ui.EvilTowerApp
 import ir.hadipoor.eviltower.ui.GameViewModel
 
 class MainActivity : ComponentActivity() {
     private val viewModel: GameViewModel by viewModels()
+    private lateinit var bazaarBilling: BazaarBillingProvider
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         WindowCompat.setDecorFitsSystemWindows(window, false)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        bazaarBilling = BazaarBillingProvider(this)
+        bazaarBilling.connect()
         setContent { EvilTowerApp(viewModel) }
     }
-    override fun onDestroy() { viewModel.release(); super.onDestroy() }
+    override fun onDestroy() { bazaarBilling.disconnect(); viewModel.release(); super.onDestroy() }
 }

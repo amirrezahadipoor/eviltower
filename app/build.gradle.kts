@@ -26,6 +26,7 @@ android {
         versionName = "1.0.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { useSupportLibrary = true }
+        buildConfigField("String", "BAZAAR_RSA_KEY", "\"${System.getenv("BAZAAR_RSA_KEY") ?: ""}\"")
     }
     signingConfigs {
         if (hasReleaseKey) create("release") {
@@ -49,7 +50,7 @@ android {
     }
     compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
     kotlinOptions { jvmTarget = "17" }
-    buildFeatures { compose = true }
+    buildFeatures { compose = true; buildConfig = true }
     packaging.resources.excludes += "/META-INF/{AL2.0,LGPL2.1}"
     lint { abortOnError = false; checkReleaseBuilds = false }
 }

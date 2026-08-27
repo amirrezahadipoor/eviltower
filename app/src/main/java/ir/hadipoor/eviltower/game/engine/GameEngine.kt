@@ -290,11 +290,15 @@ class GameEngine(private val random: Random = Random(77)) {
         for (index in floatingTexts.indices) floatingTexts[index] = floatingTexts[index].copy(age = floatingTexts[index].age + dt)
         for (index in particles.indices) particles[index] = particles[index].copy(age = particles[index].age + dt)
         floatingTexts.removeAll { it.age > 1.2f }
+        val expired = particles.filter { it.age > .75f }
+        expired.forEach { particlePool.recycle(it) }
         particles.removeAll { it.age > .75f }
     }
 
     private fun addBurst(at: Point, color: Color, count: Int = 8) {
-        repeat(count) { particles += Particle(nextId++, at, color, size = .7f + random.nextFloat() * 1.2f) }
+        repeat(count) {
+            particles += particlePool.obtain().copy(id = nextId++, at = at, color = color, age = 0f, size = .7f + random.nextFloat() * 1.2f)
+        }
     }
 
     private fun positionOf(progress: Float): Point {
@@ -305,7 +309,7 @@ class GameEngine(private val random: Random = Random(77)) {
         return Point(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t)
     }
 
-    private fun distance(a: Point, b: Point): Float = kotlin.math.hypot(a.x - b.x, a.y - b.y)
+    private fun distance(a: Point, b: Point): Float = kotlin.math.hypot((a.x - b.x).toDouble(), (a.y - b.y).toDouble()).toFloat()
 
     fun snapshot(): GameSnapshot {
         val boss = enemies.firstOrNull { it.type == EnemyType.BOSS || it.type == EnemyType.MINI_BOSS }

@@ -1,23 +1,25 @@
 package ir.hadipoor.eviltower.monetization
 
-/** Store-neutral seam. The Bazaar console can inject Poolakey in the release flavor. */
+import androidx.activity.ComponentActivity
+
 data class BillingProduct(val sku: String, val title: String, val gems: Int)
+object BillingCatalog {
+    val gemsSmall = BillingProduct("gems_small", "کیسه جواهر کوچک", 20)
+    val gemsMedium = BillingProduct("gems_medium", "کیسه جواهر بزرگ", 60)
+    val gemsLarge = BillingProduct("gems_large", "صندوق جواهر", 200)
+    val all = listOf(gemsSmall, gemsMedium, gemsLarge)
+}
 sealed interface PurchaseResult {
-    data class Success(val product: BillingProduct) : PurchaseResult
+    data class Success(val product: BillingProduct, val token: String) : PurchaseResult
     data object Unavailable : PurchaseResult
     data object Canceled : PurchaseResult
+    data class Failed(val reason: String) : PurchaseResult
 }
+
+/** Primary store seam: the production Bazaar build uses [BazaarBillingProvider] / Poolakey. */
 interface BillingProvider {
     val storeName: String
     fun connect(onReady: (Boolean) -> Unit = {})
-    fun purchase(product: BillingProduct, onResult: (PurchaseResult) -> Unit)
+    fun purchase(activity: ComponentActivity, product: BillingProduct, onResult: (PurchaseResult) -> Unit)
     fun disconnect()
-}
-
-/** Offline-safe Bazaar adapter. It never blocks core gameplay when Bazaar is absent. */
-class BazaarBillingProvider : BillingProvider {
-    override val storeName = "کافه‌بازار"
-    override fun connect(onReady: (Boolean) -> Unit) = onReady(false)
-    override fun purchase(product: BillingProduct, onResult: (PurchaseResult) -> Unit) = onResult(PurchaseResult.Unavailable)
-    override fun disconnect() = Unit
 }

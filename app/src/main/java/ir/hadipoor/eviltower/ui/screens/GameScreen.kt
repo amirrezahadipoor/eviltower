@@ -128,6 +128,7 @@ private fun PauseOverlay(vm: GameViewModel) {
             Text("بازی متوقف است", color = Gold, fontSize = 26.sp, fontWeight = FontWeight.Bold)
             EvilButton("ادامه", Modifier.fillMaxWidth(), Ember) { vm.togglePause() }
             EvilButton("شروع دوباره", Modifier.fillMaxWidth(), PanelLight) { vm.restartRun() }
+            EvilButton("تنظیمات", Modifier.fillMaxWidth(), PanelLight) { vm.open(ir.hadipoor.eviltower.ui.AppScreen.SETTINGS) }
             EvilButton("خروج به منو", Modifier.fillMaxWidth(), PanelLight) { vm.goMenu() }
         }
     }
