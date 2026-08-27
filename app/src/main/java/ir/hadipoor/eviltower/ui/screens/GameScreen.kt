@@ -94,13 +94,14 @@ fun GameScreen(
     val towerStyle = remember(profile.selectedTheme) { RenderStyles.tower(profile.selectedTheme) }
     val heroStyle = remember(profile.selectedSkin) { RenderStyles.hero(profile.selectedSkin) }
 
+    // all per-run state is keyed on the engine so "restart" starts perfectly clean
     var frame by remember { mutableIntStateOf(0) }
-    val clock = remember { FrameClock() }
-    var showPause by remember { mutableStateOf(false) }
-    var bannerText by remember { mutableStateOf<String?>(null) }
+    val clock = remember(engine) { FrameClock() }
+    var showPause by remember(engine) { mutableStateOf(false) }
+    var bannerText by remember(engine) { mutableStateOf<String?>(null) }
 
     // --- input state shared between the gesture handlers and the loop -----------------------
-    val input = remember { MutableInput() }
+    val input = remember(engine) { MutableInput() }
     val currentTilt by rememberUpdatedState(tiltX.value)
 
     // pause the run when the app goes to the background
