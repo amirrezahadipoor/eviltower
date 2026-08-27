@@ -30,7 +30,7 @@ jobs:
           key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', 'gradle/libs.versions.toml', 'gradle/wrapper/gradle-wrapper.properties') }}
           restore-keys: gradle-${{ runner.os }}-
       - run: chmod +x ./gradlew
-      - run: ./gradlew test --stacktrace
+      - run: ./gradlew test lint --stacktrace
 
   package:
     name: APK نهایی برای کافه‌بازار
