@@ -45,17 +45,51 @@ class FloorGeneratorTest {
             (2f * -GameConfig.GRAVITY)
         assertTrue("jump height must clear the step gap", maxJump > FloorGenerator.STEP_GAP)
 
-        for (floor in 1..60) {
+        for (floor in 1..GameConfig.FINAL_FLOOR) {
             val data = FloorGenerator.generate(floor, seed)
-            val ys = data.platforms
-                .filter { it.kind != PlatformKind.WALL }
-                .map { it.bounds.top }
-                .sorted()
-            var previous = data.baseY
-            ys.forEach { y ->
-                val gap = y - previous
-                assertTrue("floor $floor gap $gap is unreachable", gap <= maxJump + 0.5f)
-                previous = maxOf(previous, y)
+            val tops = data.platforms.map { it.bounds.top }.sorted()
+            tops.forEach { top ->
+                val below = tops.filter { it < top - 0.5f }
+                if (below.isEmpty()) return@forEach
+                val gap = top - below.max()
+                assertTrue("floor $floor: vertical gap $gap is unreachable", gap <= maxJump)
+            }
+            // the hero must also be able to step onto the next floor's ground slab
+            val gapToNextFloor = data.baseY + GameConfig.FLOOR_HEIGHT - tops.max()
+            assertTrue(
+                "floor $floor: cannot reach the next floor ($gapToNextFloor)",
+                gapToNextFloor <= maxJump,
+            )
+        }
+    }
+
+    @Test
+    fun `no horizontal gap exceeds the jump distance`() {
+        // time to fall back to the height of one step, times the top running speed
+        val v = GameConfig.JUMP_VELOCITY
+        val g = -GameConfig.GRAVITY
+        val flight = (v + kotlin.math.sqrt(v * v - 2 * g * FloorGenerator.STEP_GAP)) / g
+        val reach = flight * GameConfig.PLAYER_MAX_SPEED
+        assertTrue("MAX_EDGE_GAP must stay within the jump arc", FloorGenerator.MAX_EDGE_GAP < reach)
+
+        for (floor in 1..GameConfig.FINAL_FLOOR) {
+            val data = FloorGenerator.generate(floor, seed)
+            data.platforms.forEach { platform ->
+                val sources = data.platforms.filter {
+                    it.bounds.top < platform.bounds.top - 0.5f &&
+                        platform.bounds.top - it.bounds.top <= FloorGenerator.STEP_GAP + 6f
+                }
+                if (sources.isEmpty()) return@forEach
+                val gap = sources.minOf { src ->
+                    maxOf(
+                        0f,
+                        maxOf(
+                            src.bounds.left - platform.bounds.right,
+                            platform.bounds.left - src.bounds.right,
+                        ),
+                    )
+                }
+                assertTrue("floor $floor: horizontal gap $gap is unreachable", gap <= reach)
             }
         }
     }

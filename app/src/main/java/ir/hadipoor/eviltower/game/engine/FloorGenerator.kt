@@ -35,6 +35,13 @@ object FloorGenerator {
     const val STEPS = 5
     const val STEP_GAP = 24f
 
+    /**
+     * Widest horizontal edge-to-edge gap the hero can clear while climbing one [STEP_GAP].
+     * Derived from the jump arc: flight time back down to +24 units is ~0.52s at
+     * [GameConfig.PLAYER_MAX_SPEED] => ~32 units. 26 keeps a comfortable safety margin.
+     */
+    const val MAX_EDGE_GAP = 26f
+
     enum class FloorTemplate(val persianName: String) {
         STAIRWAY("پلکان سنگی"),
         BROKEN_BRIDGE("پل شکسته"),
@@ -159,15 +166,30 @@ object FloorGenerator {
             return
         }
         val inner = GameConfig.WALL_THICKNESS
-        val usable = GameConfig.WORLD_WIDTH - 2 * inner
-        var side = if (rng.nextBoolean()) 0 else 1
+        val maxX = GameConfig.WORLD_WIDTH - inner
+
+        // The hero can clear MAX_EDGE_GAP horizontally while rising one STEP_GAP, so every
+        // platform is placed relative to the previous one instead of at a random spot.
+        var prevLeft = GameConfig.WORLD_WIDTH / 2f - 13f
+        var prevRight = GameConfig.WORLD_WIDTH / 2f + 13f
+        var direction = if (rng.nextBoolean()) 1 else -1
+
         for (i in 1..STEPS) {
             val y = data.baseY + i * STEP_GAP
             val width = (34f - 13f * diff - rng.nextFloat() * 5f).coerceIn(15f, 34f)
-            // alternate sides so the climb zig-zags; jitter keeps it from feeling robotic
-            val leftBias = if (side == 0) 0f else usable - width
-            val jitter = (rng.nextFloat() - 0.5f) * (usable - width) * 0.35f
-            val x = (inner + leftBias + jitter).coerceIn(inner, GameConfig.WORLD_WIDTH - inner - width)
+            val gap = (4f + MAX_EDGE_GAP * (0.35f + 0.65f * diff) * rng.nextFloat())
+                .coerceIn(2f, MAX_EDGE_GAP)
+
+            // x must keep the edge-to-edge gap within one jump, and stay inside the walls
+            val lo = maxOf(inner, prevLeft - MAX_EDGE_GAP - width)
+            val hi = minOf(maxX - width, prevRight + MAX_EDGE_GAP)
+            var x = if (direction > 0) prevRight + gap else prevLeft - gap - width
+            if (x < lo || x > hi) {
+                direction = -direction
+                x = if (direction > 0) prevRight + gap else prevLeft - gap - width
+            }
+            x = x.coerceIn(lo, hi)
+
             val kind = when {
                 template == FloorTemplate.CRUMBLING_PATH && i % 2 == 1 -> PlatformKind.CRUMBLING
                 template == FloorTemplate.CRUMBLING_PATH && rng.nextFloat() < 0.3f -> PlatformKind.CRUMBLING
@@ -176,23 +198,26 @@ object FloorGenerator {
                 else -> PlatformKind.STONE
             }
             val platform = if (kind == PlatformKind.MOVING) {
-                val from = inner
-                val to = GameConfig.WORLD_WIDTH - inner - width
+                // a moving ledge travels around its anchor, never further than one jump away
+                val travel = (10f + 14f * diff).coerceAtMost(MAX_EDGE_GAP)
+                val from = (x - travel / 2f).coerceIn(inner, maxX - width)
+                val to = (x + travel / 2f).coerceIn(inner, maxX - width)
                 Platform(
                     bounds = Aabb(x, y, width, 4f),
                     kind = kind,
                     moveFrom = from,
                     moveTo = to,
-                    moveSpeed = 16f + 18f * diff,
+                    moveSpeed = 10f + 14f * diff,
                     phase = rng.nextFloat(),
                 )
             } else {
                 Platform(Aabb(x, y, width, 4f), kind)
             }
             data.platforms += platform
-            side = 1 - side
+            prevLeft = x
+            prevRight = x + width
+            if (rng.nextFloat() < 0.4f) direction = -direction
 
-            // coins float above most steps
             if (rng.nextFloat() < 0.55f) {
                 data.pickups += Pickup(
                     PickupKind.COIN,
@@ -200,38 +225,41 @@ object FloorGenerator {
                 )
             }
         }
-        // one guaranteed safe landing pad right under the next floor's entrance
+
+        // guaranteed landing pad right under the next floor's entrance
         val topY = data.baseY + (STEPS + 1) * STEP_GAP - 6f
         if (topY < data.baseY + data.height) {
             val w = 26f
-            val x = (GameConfig.WORLD_WIDTH - w) / 2f + (rng.nextFloat() - 0.5f) * 20f
-            data.platforms += Platform(
-                Aabb(x.coerceIn(inner, GameConfig.WORLD_WIDTH - inner - w), topY, w, 4f),
-                PlatformKind.STONE,
-            )
+            val centre = (prevLeft + prevRight) / 2f
+            val x = (centre - w / 2f + (rng.nextFloat() - 0.5f) * 14f).coerceIn(inner, maxX - w)
+            data.platforms += Platform(Aabb(x, topY, w, 4f), PlatformKind.STONE)
         }
     }
 
     private fun buildArenaSteps(data: FloorData, diff: Float, rng: Random) {
         val inner = GameConfig.WALL_THICKNESS
         val usable = GameConfig.WORLD_WIDTH - 2 * inner
-        // Boss arenas are open rooms with two side ledges and a top exit ledge.
-        data.platforms += Platform(Aabb(inner, data.baseY + 34f, usable * 0.28f, 4f))
+        // Boss arenas are open rooms: side ledges every 28 units and a central exit ledge.
+        data.platforms += Platform(Aabb(inner, data.baseY + 24f, usable * 0.30f, 4f))
         data.platforms += Platform(
-            Aabb(GameConfig.WORLD_WIDTH - inner - usable * 0.28f, data.baseY + 34f, usable * 0.28f, 4f)
+            Aabb(GameConfig.WORLD_WIDTH - inner - usable * 0.30f, data.baseY + 24f, usable * 0.30f, 4f)
         )
-        data.platforms += Platform(Aabb(inner + usable * 0.34f, data.baseY + 64f, usable * 0.32f, 4f))
-        data.platforms += Platform(Aabb(inner, data.baseY + 94f, usable * 0.26f, 4f))
+        data.platforms += Platform(Aabb(inner + usable * 0.32f, data.baseY + 52f, usable * 0.36f, 4f))
+        data.platforms += Platform(Aabb(inner, data.baseY + 80f, usable * 0.28f, 4f))
         data.platforms += Platform(
-            Aabb(GameConfig.WORLD_WIDTH - inner - usable * 0.26f, data.baseY + 94f, usable * 0.26f, 4f)
+            Aabb(GameConfig.WORLD_WIDTH - inner - usable * 0.28f, data.baseY + 80f, usable * 0.28f, 4f)
         )
-        val w = 30f
+        val w = 32f
         data.platforms += Platform(
-            Aabb((GameConfig.WORLD_WIDTH - w) / 2f, data.baseY + 124f, w, 4f),
+            Aabb((GameConfig.WORLD_WIDTH - w) / 2f, data.baseY + 108f, w, 4f),
+            PlatformKind.STONE,
+        )
+        data.platforms += Platform(
+            Aabb((GameConfig.WORLD_WIDTH - w) / 2f, data.baseY + 132f, w, 4f),
             PlatformKind.STONE,
         )
         if (rng.nextFloat() < 0.6f + diff * 0.2f) {
-            data.pickups += Pickup(PickupKind.HEART, Aabb(inner + 4f, data.baseY + 44f, 7f, 7f))
+            data.pickups += Pickup(PickupKind.HEART, Aabb(inner + 4f, data.baseY + 34f, 7f, 7f))
         }
     }
 
