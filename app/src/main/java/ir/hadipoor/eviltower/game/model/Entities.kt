@@ -69,6 +69,7 @@ data class Enemy(
     val burnDps: Float = 0f,
     val hitFlash: Float = 0f,
     val bossPhase: Int = 1,
+    val bossDesign: Int = 0,
     val stealth: Boolean = false,
 )
 

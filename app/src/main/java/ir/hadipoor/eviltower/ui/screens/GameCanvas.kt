@@ -211,7 +211,20 @@ private fun DrawScope.drawEnemies(snapshot: GameSnapshot) {
             }
             EnemyType.WRAITH -> { val alpha = if (enemy.stealth) .22f else .68f; drawCircle(Color(0xFF7B5BA7).copy(alpha = alpha), radius + 4f, p); drawCircle(Color(0xFFD9B8FF).copy(alpha = alpha + .2f), 3f, p.copy(x = p.x + 5, y = p.y - 2)) }
             EnemyType.IMP -> { drawCircle(Color(0xFFE95645), radius, p); line(p.copy(x = p.x - 5, y = p.y - 7), p.copy(x = p.x - 11, y = p.y - 16), Color(0xFFFFB347), 3f); line(p.copy(x = p.x + 5, y = p.y - 7), p.copy(x = p.x + 11, y = p.y - 16), Color(0xFFFFB347), 3f) }
-            EnemyType.MINI_BOSS, EnemyType.BOSS -> { drawCircle(Danger.copy(alpha = .18f), radius + 10f, p); drawCircle(if (enemy.type == EnemyType.BOSS) when (enemy.bossPhase) { 1 -> Color(0xFFB52F5B); 2 -> Color(0xFFCF553D); else -> Color(0xFFE36A2E) } else Color(0xFF8E493D), radius, p); drawCircle(Gold, 4f, p.copy(y = p.y - 3)); line(p.copy(x = p.x - radius, y = p.y - radius - 4), p.copy(x = p.x - 5, y = p.y - radius - 14), Gold, 3f); line(p.copy(x = p.x + radius, y = p.y - radius - 4), p.copy(x = p.x + 5, y = p.y - radius - 14), Gold, 3f) }
+            EnemyType.MINI_BOSS, EnemyType.BOSS -> {
+                val designs = listOf(Color(0xFFB52F5B), Color(0xFF6D4CC2), Color(0xFFCF553D), Color(0xFF2D8C9B), Color(0xFF7F3E5B), Color(0xFFE36A2E))
+                val designColor = designs[enemy.bossDesign % designs.size]
+                drawCircle(designColor.copy(alpha = .18f), radius + 10f, p)
+                drawCircle(if (enemy.type == EnemyType.BOSS) when (enemy.bossPhase) { 1 -> designColor; 2 -> Color(0xFFCF553D); else -> Color(0xFFE36A2E) } else designColor, radius, p)
+                drawCircle(Gold, 4f, p.copy(y = p.y - 3))
+                if (enemy.bossDesign % 2 == 0) {
+                    line(p.copy(x = p.x - radius, y = p.y - radius - 4), p.copy(x = p.x - 5, y = p.y - radius - 14), Gold, 3f)
+                    line(p.copy(x = p.x + radius, y = p.y - radius - 4), p.copy(x = p.x + 5, y = p.y - radius - 14), Gold, 3f)
+                } else {
+                    line(p.copy(x = p.x - radius - 4), p.copy(x = p.x - radius - 16), Gold, 3f)
+                    line(p.copy(x = p.x + radius + 4), p.copy(x = p.x + radius + 16), Gold, 3f)
+                }
+            }
             else -> {
                 drawCircle(if (enemy.elite) Color(0xFFB9455F) else Acid, radius, p)
                 drawCircle(Color(0xFF211828), 3f, p.copy(x = p.x + 4, y = p.y - 2))

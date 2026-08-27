@@ -188,7 +188,8 @@ class GameEngine(private val random: Random = Random(77)) {
         enemies += enemyPool.obtain().copy(
             id = nextId++, type = unit.type, progress = 0f, hp = hp, maxHp = hp,
             flying = unit.type.flying, elite = unit.elite, bossName = unit.bossName,
-            bossPhase = 1, stealth = unit.type == EnemyType.WRAITH,
+            bossPhase = 1, bossDesign = ((wave / if (unit.type == EnemyType.BOSS) 10 else 5) - 1).coerceAtLeast(0) % 6,
+            stealth = unit.type == EnemyType.WRAITH,
         )
     }
 
