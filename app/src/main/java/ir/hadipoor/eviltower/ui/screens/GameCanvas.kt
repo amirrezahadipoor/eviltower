@@ -42,7 +42,8 @@ import kotlin.math.sin
 
 @Composable
 fun GameCanvas(snapshot: GameSnapshot, onPlotTap: (Int) -> Unit, modifier: Modifier = Modifier) {
-    val runtime = remember { SvgRuntime(LocalContext.current) }
+    val context = LocalContext.current
+    val runtime = remember { SvgRuntime(context) }
     val preload = remember {
         TowerType.entries.map { SvgAssets.tower(it, 1) } + EnemyType.entries.flatMap { listOf(SvgAssets.enemy(it, 0), SvgAssets.enemy(it, 4)) }
     }
