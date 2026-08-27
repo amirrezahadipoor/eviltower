@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- برج شیطانی (Evil Tower) sprite: WINGS_BODY
+     Source of truth: app/src/main/java/ir/hadipoor/eviltower/game/render/SvgSprites.kt
+     Regenerate with: python3 tools/export_svg.py -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <g fill="#E8E2D0" fill-rule="evenodd">
+    <path d="M50,40 C34,14 10,10 2,30 C16,30 20,40 16,52 C30,46 42,52 46,62 Z M50,40 C66,14 90,10 98,30 C84,30 80,40 84,52 C70,46 58,52 54,62 Z">
+    </path>
+  </g>
+</svg>

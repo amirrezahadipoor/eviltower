@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- برج شیطانی (Evil Tower) sprite: SKELETON_RIBS
+     Source of truth: app/src/main/java/ir/hadipoor/eviltower/game/render/SvgSprites.kt
+     Regenerate with: python3 tools/export_svg.py -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <g fill="#E8E2D0" fill-rule="evenodd">
+    <path d="M40,46 L60,46 L58,78 L42,78 Z M34,52 L66,52 L66,56 L34,56 Z M35,62 L65,62 L65,66 L35,66 Z">
+    </path>
+  </g>
+</svg>

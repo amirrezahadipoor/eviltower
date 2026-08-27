@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- برج شیطانی (Evil Tower) sprite: MAGNET_TIP
+     Source of truth: app/src/main/java/ir/hadipoor/eviltower/game/render/SvgSprites.kt
+     Regenerate with: python3 tools/export_svg.py -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <g fill="#D6444F" fill-rule="evenodd">
+    <path d="M18,92 L40,92 L40,74 L18,74 Z M60,92 L82,92 L82,74 L60,74 Z">
+    </path>
+  </g>
+</svg>
