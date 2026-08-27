@@ -20,6 +20,15 @@ class EngineTest {
         assertTrue(engine.snapshot().towers.isEmpty())
     }
 
+    @Test fun `shield is available only during an active wave and has cooldown`() {
+        val engine = GameEngine()
+        engine.startRun()
+        repeat(70) { engine.update(.05f) }
+        assertTrue(engine.activateShield())
+        assertTrue(engine.snapshot().shieldRemaining > 0f)
+        assertTrue(!engine.activateShield())
+    }
+
     @Test fun `simulation advances and never skips phase rules`() {
         val engine = GameEngine()
         engine.startRun(startingGold = 100000)
