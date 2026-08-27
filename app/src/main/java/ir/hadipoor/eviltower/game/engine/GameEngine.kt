@@ -2,6 +2,7 @@ package ir.hadipoor.eviltower.game.engine
 
 import androidx.compose.ui.graphics.Color
 import ir.hadipoor.eviltower.game.model.Enemy
+import ir.hadipoor.eviltower.game.model.EnemyType
 import ir.hadipoor.eviltower.game.model.EnginePhase
 import ir.hadipoor.eviltower.game.model.FloatingText
 import ir.hadipoor.eviltower.game.model.GameSnapshot
@@ -10,15 +11,18 @@ import ir.hadipoor.eviltower.game.model.Point
 import ir.hadipoor.eviltower.game.model.Projectile
 import ir.hadipoor.eviltower.game.model.Tower
 import ir.hadipoor.eviltower.game.model.TowerType
-import ir.hadipoor.eviltower.game.model.EnemyType
 import ir.hadipoor.eviltower.game.model.WavePlan
+import ir.hadipoor.eviltower.game.model.WaveUnit
 import kotlin.math.ceil
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
 import kotlin.random.Random
 
-/** Deterministic, Android-free wave-defense simulation. Compose only observes snapshots. */
+/**
+ * Deterministic, Android-free simulation. Mutations happen on one ViewModel coroutine and the UI
+ * receives immutable snapshots. The engine intentionally owns all combat rules, not Composables.
+ */
 class GameEngine(private val random: Random = Random(77)) {
     private var phase = EnginePhase.PREP
     private var wave = 1
@@ -36,8 +40,10 @@ class GameEngine(private val random: Random = Random(77)) {
     private var nextId = 1
     private var selectedPlot: Int? = null
     private var currentPlan: WavePlan? = null
-    private var endlessMessageTimer = 0f
+    private var message: String? = null
+    private var messageTimer = 0f
     private var abilityCooldown = 0f
+    private var screenShake = 0f
     private var arcaneUnlocked = false
     private val towers = mutableListOf<Tower>()
     private val enemies = mutableListOf<Enemy>()
@@ -47,24 +53,13 @@ class GameEngine(private val random: Random = Random(77)) {
     private val particlePool = ObjectPool<Particle>(factory = { Particle(0, Point(0f, 0f), Color.White) })
 
     fun startRun(startingGold: Int = 520, personalBest: Int = 0, arcane: Boolean = false) {
-        phase = EnginePhase.PREP
-        wave = 1
-        bestWave = personalBest
-        gold = startingGold
-        gems = 0
-        coreHp = Balance.MAX_CORE_HP
-        enemiesDefeated = 0
-        goldEarned = 0
-        elapsed = 0f
-        prepRemaining = Balance.PREP_SECONDS
-        spawnTimer = 0f
-        spawned = 0
-        combo = 0
-        nextId = 1
-        selectedPlot = null
-        currentPlan = null
-        arcaneUnlocked = arcane
-        abilityCooldown = 0f
+        phase = EnginePhase.PREP; wave = 1; bestWave = personalBest
+        gold = startingGold; gems = 0; coreHp = Balance.MAX_CORE_HP
+        enemiesDefeated = 0; goldEarned = 0; elapsed = 0f
+        prepRemaining = Balance.PREP_SECONDS; spawnTimer = 0f; spawned = 0; combo = 0; nextId = 1
+        selectedPlot = null; currentPlan = null; message = null; messageTimer = 0f
+        abilityCooldown = 0f; screenShake = 0f; arcaneUnlocked = arcane
+        particles.forEach(particlePool::recycle)
         towers.clear(); enemies.clear(); projectiles.clear(); floatingTexts.clear(); particles.clear()
     }
 
@@ -98,8 +93,8 @@ class GameEngine(private val random: Random = Random(77)) {
         val cost = Balance.upgradeCost(tower)
         if (gold < cost) return false
         gold -= cost
-        towers[index] = tower.copy(level = tower.level + 1, upgradePulse = 1f)
-        addBurst(Balance.PLOTS[plot], tower.type.color)
+        towers[index] = tower.copy(level = tower.level + 1, upgradePulse = 1f, webbed = 0f)
+        addBurst(Balance.PLOTS[plot], tower.type.color, 12)
         return true
     }
 
@@ -108,34 +103,33 @@ class GameEngine(private val random: Random = Random(77)) {
         val index = towers.indexOfFirst { it.plot == plot }
         if (index < 0) return false
         val tower = towers.removeAt(index)
-        gold += (Balance.towerCost(tower.type, tower.level) * .55f).toInt()
+        gold += (Balance.towerCost(tower.type, tower.level) * .60f).toInt()
         selectedPlot = null
         return true
     }
 
-    /** A map-targeted inferno ability: strong area damage, with a readable cooldown. */
+    /** Map-targeted inferno: a fair cooldown, strong area damage and an obvious vector burst. */
     fun activateInferno(): Boolean {
         if (phase != EnginePhase.ACTIVE || abilityCooldown > 0f) return false
         abilityCooldown = 18f
         val center = selectedPlot?.let { Balance.PLOTS[it] } ?: Point(.50f, .50f)
-        val victims = enemies.filter { distance(positionOf(it.progress), center) < .18f }.toList()
-        victims.forEach { enemy -> damageEnemy(enemy.id, 180f, TowerType.FIRE, center) }
-        addBurst(center, Color(0xFFFF5B4D), 16)
+        val victims = enemies.filter { distance(positionOf(it.progress), center) < .19f }.map { it.id }
+        victims.forEach { id -> damageEnemy(id, 260f + wave * 1.2f, TowerType.FIRE, center, sourceLevel = 35, allowSplash = false) }
+        addBurst(center, Color(0xFFFF5B4D), 22)
+        screenShake = max(screenShake, .10f)
         return true
     }
 
     fun update(dtRaw: Float) {
         if (phase == EnginePhase.PAUSED || phase == EnginePhase.DEFEATED) return
-        val dt = dtRaw.coerceIn(0f, .08f)
+        val dt = dtRaw.coerceIn(0f, .05f)
         elapsed += dt
         abilityCooldown = max(0f, abilityCooldown - dt)
-        endlessMessageTimer = max(0f, endlessMessageTimer - dt)
+        messageTimer = max(0f, messageTimer - dt)
+        screenShake = max(0f, screenShake - dt * 1.7f)
         updateEffects(dt)
         when (phase) {
-            EnginePhase.PREP -> {
-                prepRemaining -= dt
-                if (prepRemaining <= 0f) beginWave()
-            }
+            EnginePhase.PREP -> { prepRemaining -= dt; if (prepRemaining <= 0f) beginWave() }
             EnginePhase.ACTIVE -> updateActive(dt)
             else -> Unit
         }
@@ -143,15 +137,19 @@ class GameEngine(private val random: Random = Random(77)) {
 
     private fun beginWave() {
         currentPlan = Balance.wavePlan(wave)
-        spawned = 0
-        spawnTimer = 0f
-        prepRemaining = Balance.PREP_SECONDS
-        phase = EnginePhase.ACTIVE
-        if (wave == 301) endlessMessageTimer = 6f
+        spawned = 0; spawnTimer = 0f; prepRemaining = Balance.PREP_SECONDS; phase = EnginePhase.ACTIVE
+        if (wave == 301) announce("شما وارد فاز بی‌پایان شده‌اید", 6f)
         if (currentPlan?.isBoss == true) {
-            addBurst(Point(.90f, .16f), Color(0xFFFF4D6D), 20)
-            floatingTexts += FloatingText(nextId++, "هشدار باس: ${currentPlan?.bossName}", Point(.52f, .10f), Color(0xFFFFD166))
+            addBurst(Point(.90f, .16f), Color(0xFFFF4D6D), 26)
+            announce("هشدار باس: ${currentPlan?.bossName}", 4f)
+        } else if (currentPlan?.isMiniBoss == true) {
+            announce("مینی‌باس نزدیک می‌شود: ${currentPlan?.bossName}", 3f)
         }
+    }
+
+    private fun announce(text: String, seconds: Float) {
+        message = text; messageTimer = seconds
+        floatingTexts += FloatingText(nextId++, text, Point(.50f, .10f), Color(0xFFFFD166))
     }
 
     private fun updateActive(dt: Float) {
@@ -159,26 +157,24 @@ class GameEngine(private val random: Random = Random(77)) {
             if (spawned < plan.units.size) {
                 spawnTimer -= dt
                 if (spawnTimer <= 0f) {
-                    spawn(plan.units[spawned])
-                    spawned++
+                    spawn(plan.units[spawned]); spawned++
                     spawnTimer = if (plan.isBoss && spawned == plan.units.size) .9f else .52f
                 }
             }
         }
         updateEnemies(dt)
         updateTowers(dt)
-        projectiles.forEachIndexed { index, projectile -> projectiles[index] = projectile.copy(progress = projectile.progress + dt * 5.5f) }
+        projectiles.replaceAll { it.copy(progress = it.progress + dt * 5.5f) }
         projectiles.removeAll { it.progress >= 1f }
-        if (phase == EnginePhase.ACTIVE && spawned >= (currentPlan?.units?.size ?: 0) && enemies.isEmpty() && projectiles.isEmpty()) {
-            clearWave()
-        }
+        if (phase == EnginePhase.ACTIVE && spawned >= (currentPlan?.units?.size ?: 0) && enemies.isEmpty() && projectiles.isEmpty()) clearWave()
     }
 
-    private fun spawn(unit: ir.hadipoor.eviltower.game.model.WaveUnit) {
+    private fun spawn(unit: WaveUnit) {
         val hp = Balance.enemyHp(unit.type, wave, unit.elite)
         enemies += Enemy(
             id = nextId++, type = unit.type, progress = 0f, hp = hp, maxHp = hp,
             flying = unit.type.flying, elite = unit.elite, bossName = unit.bossName,
+            bossPhase = 1, stealth = unit.type == EnemyType.WRAITH,
         )
     }
 
@@ -187,144 +183,154 @@ class GameEngine(private val random: Random = Random(77)) {
         while (iterator.hasNext()) {
             val enemy = iterator.next()
             var updated = enemy
-            if (enemy.burn > 0f) {
-                updated = updated.copy(burn = max(0f, enemy.burn - dt), hp = enemy.hp - enemy.burnDps * dt)
+            if (enemy.burn > 0f) updated = updated.copy(burn = max(0f, enemy.burn - dt), hp = enemy.hp - enemy.burnDps * dt)
+            val phase = when {
+                enemy.type != EnemyType.BOSS -> 1
+                updated.hp > updated.maxHp * .66f -> 1
+                updated.hp > updated.maxHp * .33f -> 2
+                else -> 3
             }
-            val speedFactor = 1f - updated.slow.coerceIn(0f, .75f)
             updated = updated.copy(
+                bossPhase = phase,
+                stealth = updated.type == EnemyType.WRAITH && (elapsed.toInt() / 3) % 2 == 1,
                 slow = max(0f, updated.slow - dt),
                 hitFlash = max(0f, updated.hitFlash - dt),
-                progress = updated.progress + Balance.enemySpeed(updated.type, wave) * speedFactor * dt,
+                progress = updated.progress + Balance.enemySpeed(updated.type, wave) * (1f - updated.slow.coerceIn(0f, .75f)) * dt,
             )
+            if (updated.type == EnemyType.SPIDER && random.nextFloat() < dt * .055f && towers.isNotEmpty()) {
+                val target = random.nextInt(towers.size)
+                towers[target] = towers[target].copy(webbed = max(towers[target].webbed, 2.5f))
+                addBurst(Balance.PLOTS[towers[target].plot], Color(0xFFC65FA2), 4)
+            }
             if (updated.hp <= 0f) {
-                iterator.remove()
-                onKill(updated)
+                iterator.remove(); onKill(updated)
             } else if (updated.progress >= 1f) {
                 iterator.remove()
-                coreHp -= if (updated.type == EnemyType.BOSS) 3 else if (updated.type == EnemyType.MINI_BOSS) 2 else Balance.enemyDamage(wave)
-                combo = 0
-                addBurst(Balance.PATH.last(), Color(0xFFFF476F), 10)
+                val damage = if (updated.type == EnemyType.BOSS) 3 else if (updated.type == EnemyType.MINI_BOSS) 2 else Balance.enemyDamage(wave)
+                coreHp -= damage; combo = 0; screenShake = max(screenShake, if (damage >= 2) .18f else .08f)
+                addBurst(Balance.PATH.last(), Color(0xFFFF476F), 12)
                 if (coreHp <= 0) phase = EnginePhase.DEFEATED
-            } else {
-                iterator.set(updated)
-            }
+            } else iterator.set(updated)
         }
+        towers.replaceAll { it.copy(webbed = max(0f, it.webbed - dt)) }
     }
 
     private fun updateTowers(dt: Float) {
         for (index in towers.indices) {
-            var tower = towers[index]
+            val tower = towers[index]
             val cooldown = max(0f, tower.cooldown - dt)
-            if (cooldown > 0f) {
-                towers[index] = tower.copy(cooldown = cooldown, upgradePulse = max(0f, tower.upgradePulse - dt * 2f))
-                continue
+            if (tower.webbed > 0f || cooldown > 0f) {
+                towers[index] = tower.copy(cooldown = cooldown, upgradePulse = max(0f, tower.upgradePulse - dt * 2f)); continue
             }
             val origin = Balance.PLOTS[tower.plot]
-            val target = enemies
-                .filter { enemy -> (!enemy.flying || tower.type == TowerType.SKY_ARCHER) && distance(positionOf(enemy.progress), origin) <= Balance.towerRange(tower) }
-                .maxByOrNull { it.progress }
-            if (target != null) {
-                val targetPoint = positionOf(target.progress)
-                projectiles += Projectile(nextId++, tower.type, origin, targetPoint)
-                damageEnemy(target.id, Balance.towerDamage(tower), tower.type, targetPoint)
-                if (tower.type == TowerType.LIGHTNING) {
-                    enemies.filter { it.id != target.id && distance(positionOf(it.progress), targetPoint) < .12f }.take(2)
-                        .forEach { damageEnemy(it.id, Balance.towerDamage(tower) * .38f, tower.type, targetPoint) }
-                }
-                towers[index] = tower.copy(cooldown = Balance.towerInterval(tower), totalDamage = tower.totalDamage + Balance.towerDamage(tower).toLong())
-            } else {
-                towers[index] = tower.copy(cooldown = cooldown, upgradePulse = max(0f, tower.upgradePulse - dt * 2f))
+            val target = enemies.filter { enemy ->
+                (!enemy.flying || tower.type == TowerType.SKY_ARCHER) && distance(positionOf(enemy.progress), origin) <= Balance.towerRange(tower)
+            }.maxByOrNull { it.progress }
+            if (target == null) {
+                towers[index] = tower.copy(cooldown = cooldown, upgradePulse = max(0f, tower.upgradePulse - dt * 2f)); continue
             }
+            val targetPoint = positionOf(target.progress)
+            projectiles += Projectile(nextId++, tower.type, origin, targetPoint)
+            damageEnemy(target.id, Balance.towerDamage(tower), tower.type, targetPoint, tower.level)
+            if (tower.type == TowerType.LIGHTNING) {
+                enemies.filter { it.id != target.id && distance(positionOf(it.progress), targetPoint) < .13f }.take(3)
+                    .forEach { chain -> damageEnemy(chain.id, Balance.towerDamage(tower) * .42f, tower.type, targetPoint, tower.level, false) }
+            }
+            towers[index] = tower.copy(cooldown = Balance.towerInterval(tower), totalDamage = tower.totalDamage + Balance.towerDamage(tower).toLong(), upgradePulse = max(0f, tower.upgradePulse - dt * 2f))
         }
     }
 
-    private fun damageEnemy(id: Int, rawDamage: Float, towerType: TowerType, at: Point) {
+    private fun damageEnemy(id: Int, rawDamage: Float, towerType: TowerType, at: Point, sourceLevel: Int = 1, allowSplash: Boolean = true) {
         val index = enemies.indexOfFirst { it.id == id }
         if (index < 0) return
         val target = enemies[index]
-        val physicalMultiplier = if (target.type == EnemyType.SKELETON && towerType != TowerType.ARCANE) .68f else 1f
-        val damage = rawDamage * physicalMultiplier
-        val burn = if (towerType == TowerType.FIRE) Balance.burnSeconds(levelFor(towerType)) else target.burn
-        val burnDps = if (towerType == TowerType.FIRE) damage * .22f else target.burnDps
-        val slow = if (towerType == TowerType.FROST) Balance.slowStrength(levelFor(towerType)) else target.slow
-        val updated = target.copy(hp = target.hp - damage, hitFlash = .10f, burn = max(target.burn, burn), burnDps = max(target.burnDps, burnDps), slow = max(target.slow, slow))
+        val multiplier = Balance.armorMultiplier(target.type, towerType, wave, target.stealth)
+        val damage = rawDamage * multiplier
+        val burn = if (towerType == TowerType.FIRE) Balance.burnSeconds(sourceLevel) else target.burn
+        val burnDps = if (towerType == TowerType.FIRE) damage * .26f else target.burnDps
+        val slow = if (towerType == TowerType.FROST) Balance.slowStrength(sourceLevel) else target.slow
+        val nextPhase = when {
+            target.type != EnemyType.BOSS -> target.bossPhase
+            target.hp - damage > target.maxHp * .66f -> 1
+            target.hp - damage > target.maxHp * .33f -> 2
+            else -> 3
+        }
+        val updated = target.copy(
+            hp = target.hp - damage, hitFlash = .12f, burn = max(target.burn, burn), burnDps = max(target.burnDps, burnDps),
+            slow = max(target.slow, slow), bossPhase = nextPhase,
+        )
         enemies[index] = updated
-        floatingTexts += FloatingText(nextId++, "-${damage.toInt()}", at, towerType.color)
-        particles += Particle(nextId++, at, towerType.color, size = if (towerType == TowerType.CANNON) 1.8f else 1f)
+        addFloating("-${damage.toInt()}", at, towerType.color)
+        addParticle(at, towerType.color, if (towerType == TowerType.CANNON) 1.8f else 1f)
+        if (target.type == EnemyType.BOSS && nextPhase != target.bossPhase) {
+            announce("فاز ${nextPhase} باس آغاز شد", 2.2f); addBurst(at, Color(0xFFFF4D6D), 18); screenShake = max(screenShake, .12f)
+        }
         if (updated.hp <= 0f) {
-            enemies.removeAt(index)
-            onKill(updated)
+            enemies.removeAt(index); onKill(updated); return
+        }
+        if (allowSplash && towerType == TowerType.CANNON) {
+            enemies.filter { it.id != id && distance(positionOf(it.progress), at) < .115f }.map { it.id }.take(5)
+                .forEach { splashId -> damageEnemy(splashId, rawDamage * .42f, towerType, at, sourceLevel, false) }
         }
     }
 
-    private fun levelFor(type: TowerType): Int = towers.filter { it.type == type }.maxOfOrNull { it.level } ?: 1
-
     private fun onKill(enemy: Enemy) {
         val reward = Balance.enemyReward(enemy.type, wave)
-        gold += reward
-        goldEarned += reward
-        enemiesDefeated++
-        combo++
-        floatingTexts += FloatingText(nextId++, "+$reward", positionOf(enemy.progress), Color(0xFFFFD166))
+        gold += reward; goldEarned += reward; enemiesDefeated++; combo++
+        addFloating("+$reward", positionOf(enemy.progress), Color(0xFFFFD166))
         addBurst(positionOf(enemy.progress), when (enemy.type) {
             EnemyType.BAT, EnemyType.WRAITH -> Color(0xFFC19BFF)
             EnemyType.IMP -> Color(0xFFFF5B4D)
             EnemyType.SKELETON -> Color(0xFFE8E0D0)
+            EnemyType.SPIDER -> Color(0xFFC65FA2)
             else -> Color(0xFF7CE38B)
-        }, if (enemy.type == EnemyType.BOSS) 24 else 6)
-    }
-
-    private fun clearWave() {
-        val clearReward = ceil(20 * wave.toDouble().pow(.55)).toInt()
-        gold += clearReward
-        goldEarned += clearReward
-        gems += if (wave % 10 == 0) 2 else 0
-        floatingTexts += FloatingText(nextId++, "موج ${wave} پاک شد  +$clearReward", Point(.5f, .22f), Color(0xFFFFD166))
-        wave++
-        bestWave = max(bestWave, wave - 1)
-        currentPlan = null
-        prepRemaining = Balance.PREP_SECONDS
-        phase = EnginePhase.PREP
-        spawned = 0
-    }
-
-    private fun updateEffects(dt: Float) {
-        for (index in floatingTexts.indices) floatingTexts[index] = floatingTexts[index].copy(age = floatingTexts[index].age + dt)
-        for (index in particles.indices) particles[index] = particles[index].copy(age = particles[index].age + dt)
-        floatingTexts.removeAll { it.age > 1.2f }
-        val expired = particles.filter { it.age > .75f }
-        expired.forEach { particlePool.recycle(it) }
-        particles.removeAll { it.age > .75f }
-    }
-
-    private fun addBurst(at: Point, color: Color, count: Int = 8) {
-        repeat(count) {
-            particles += particlePool.obtain().copy(id = nextId++, at = at, color = color, age = 0f, size = .7f + random.nextFloat() * 1.2f)
+        }, if (enemy.type == EnemyType.BOSS) 30 else 8)
+        if (enemy.type == EnemyType.IMP) {
+            enemies.filter { distance(positionOf(it.progress), positionOf(enemy.progress)) < .12f }.map { it.id }.toList()
+                .forEach { damageEnemy(it, enemy.maxHp * .12f, TowerType.FIRE, positionOf(enemy.progress), 20, false) }
         }
     }
 
+    private fun clearWave() {
+        val clearReward = Balance.waveClearReward(wave)
+        gold += clearReward; goldEarned += clearReward; gems += if (wave % 10 == 0) 2 else 0
+        addFloating("موج ${wave} پاک شد  +$clearReward", Point(.5f, .22f), Color(0xFFFFD166))
+        wave++; bestWave = max(bestWave, wave - 1); currentPlan = null; prepRemaining = Balance.PREP_SECONDS; phase = EnginePhase.PREP; spawned = 0
+    }
+
+    private fun updateEffects(dt: Float) {
+        floatingTexts.replaceAll { it.copy(age = it.age + dt) }
+        particles.replaceAll { it.copy(age = it.age + dt) }
+        floatingTexts.removeAll { it.age > 1.35f }
+        val expired = particles.filter { it.age > .78f }
+        expired.forEach(particlePool::recycle)
+        particles.removeAll { it.age > .78f }
+    }
+
+    private fun addFloating(text: String, at: Point, color: Color) { floatingTexts += FloatingText(nextId++, text, at, color) }
+    private fun addParticle(at: Point, color: Color, size: Float) { particles += particlePool.obtain().copy(id = nextId++, at = at, color = color, age = 0f, size = size) }
+    private fun addBurst(at: Point, color: Color, count: Int = 8) { repeat(count) { addParticle(at, color, .7f + random.nextFloat() * 1.2f) } }
+
     private fun positionOf(progress: Float): Point {
         val p = progress.coerceIn(0f, .9999f) * (Balance.PATH.size - 1)
-        val index = p.toInt().coerceIn(0, Balance.PATH.size - 2)
-        val t = p - index
+        val index = p.toInt().coerceIn(0, Balance.PATH.size - 2); val t = p - index
         val a = Balance.PATH[index]; val b = Balance.PATH[index + 1]
         return Point(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t)
     }
-
     private fun distance(a: Point, b: Point): Float = kotlin.math.hypot((a.x - b.x).toDouble(), (a.y - b.y).toDouble()).toFloat()
 
     fun snapshot(): GameSnapshot {
         val boss = enemies.firstOrNull { it.type == EnemyType.BOSS || it.type == EnemyType.MINI_BOSS }
         return GameSnapshot(
-            phase = phase, wave = wave, bestWave = bestWave, gold = gold, gems = gems,
-            coreHp = coreHp, enemiesDefeated = enemiesDefeated, goldEarned = goldEarned,
-            runSeconds = elapsed.toInt(), prepRemaining = prepRemaining.coerceAtLeast(0f),
+            phase = phase, wave = wave, bestWave = bestWave, gold = gold, gems = gems, coreHp = coreHp,
+            enemiesDefeated = enemiesDefeated, goldEarned = goldEarned, runSeconds = elapsed.toInt(),
+            prepRemaining = prepRemaining.coerceAtLeast(0f), worldTime = elapsed, screenShake = screenShake,
             spawned = spawned, totalToSpawn = currentPlan?.units?.size ?: 0, isEndless = wave >= 301,
             bossName = boss?.bossName, bossHp = boss?.hp ?: 0f, bossMaxHp = boss?.maxHp ?: 0f,
-            abilityRemaining = abilityCooldown,
-            selectedPlot = selectedPlot, towers = towers.toList(), enemies = enemies.toList(),
-            projectiles = projectiles.toList(), floatingTexts = floatingTexts.toList(), particles = particles.toList(),
-            combo = combo, message = if (endlessMessageTimer > 0f) "شما وارد فاز بی‌پایان شده‌اید" else null,
+            bossPhase = boss?.bossPhase ?: 1, abilityRemaining = abilityCooldown, selectedPlot = selectedPlot,
+            towers = towers.toList(), enemies = enemies.toList(), projectiles = projectiles.toList(),
+            floatingTexts = floatingTexts.toList(), particles = particles.toList(), combo = combo,
+            message = message.takeIf { messageTimer > 0f },
         )
     }
 

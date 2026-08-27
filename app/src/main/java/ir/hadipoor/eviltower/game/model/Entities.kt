@@ -52,6 +52,7 @@ data class Tower(
     val cooldown: Float = 0f,
     val totalDamage: Long = 0,
     val upgradePulse: Float = 0f,
+    val webbed: Float = 0f,
 )
 
 data class Enemy(
@@ -67,6 +68,8 @@ data class Enemy(
     val burn: Float = 0f,
     val burnDps: Float = 0f,
     val hitFlash: Float = 0f,
+    val bossPhase: Int = 1,
+    val stealth: Boolean = false,
 )
 
 data class Projectile(
@@ -97,12 +100,15 @@ data class GameSnapshot(
     val goldEarned: Int = 0,
     val runSeconds: Int = 0,
     val prepRemaining: Float = 3f,
+    val worldTime: Float = 0f,
+    val screenShake: Float = 0f,
     val spawned: Int = 0,
     val totalToSpawn: Int = 0,
     val isEndless: Boolean = false,
     val bossName: String? = null,
     val bossHp: Float = 0f,
     val bossMaxHp: Float = 0f,
+    val bossPhase: Int = 1,
     val abilityRemaining: Float = 0f,
     val selectedPlot: Int? = null,
     val towers: List<Tower> = emptyList(),

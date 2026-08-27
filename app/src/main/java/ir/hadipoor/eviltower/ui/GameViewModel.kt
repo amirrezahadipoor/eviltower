@@ -46,11 +46,24 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
         screen.value = AppScreen.GAME
         loop?.cancel()
         loop = viewModelScope.launch {
+            var previousProjectiles = 0
+            var previousKills = 0
+            var previousCore = snapshot.value.coreHp
+            var previousBoss: String? = null
             while (isActive && screen.value == AppScreen.GAME) {
-                delay(33)
-                engine.update(1f / 30f)
+                delay(16)
+                engine.update(1f / 60f)
                 snapshot.value = engine.snapshot()
-                if (snapshot.value.phase == EnginePhase.DEFEATED) {
+                val current = snapshot.value
+                if (current.projectiles.size > previousProjectiles) audio.playFire()
+                if (current.enemiesDefeated > previousKills) { audio.playDeath(); audio.playCoin() }
+                if (current.coreHp < previousCore) audio.playHit()
+                if (current.bossName != null && current.bossName != previousBoss) audio.playBoss()
+                previousProjectiles = current.projectiles.size
+                previousKills = current.enemiesDefeated
+                previousCore = current.coreHp
+                previousBoss = current.bossName
+                if (current.phase == EnginePhase.DEFEATED) {
                     saveResult()
                     delay(420)
                     screen.value = AppScreen.RESULT

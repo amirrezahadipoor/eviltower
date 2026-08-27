@@ -21,6 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -41,12 +42,13 @@ import ir.hadipoor.eviltower.ui.theme.Gold
 import ir.hadipoor.eviltower.ui.theme.Night
 import ir.hadipoor.eviltower.ui.theme.Panel
 import ir.hadipoor.eviltower.ui.theme.PanelLight
+import kotlin.math.sin
 
 @Composable
 fun GameScreen(vm: GameViewModel) {
     val snapshot = vm.snapshot.value
     Box(Modifier.fillMaxSize().background(Night)) {
-        Column(Modifier.fillMaxSize()) {
+        Column(Modifier.fillMaxSize().graphicsLayer { translationX = sin(snapshot.worldTime * 40f) * snapshot.screenShake * 32f }) {
             GameTopBar(snapshot, vm)
             if (snapshot.bossName != null) BossBar(snapshot)
             GameCanvas(snapshot, onPlotTap = { vm.selectPlot(it) }, modifier = Modifier.weight(1f).fillMaxWidth())
@@ -99,6 +101,7 @@ private fun BuildPanel(snapshot: GameSnapshot, vm: GameViewModel) {
         } else {
             TowerUpgradePanel(selected, snapshot, vm)
         }
+        Text("پیشرفت موج: ${fa(snapshot.spawned)} / ${fa(snapshot.totalToSpawn)}", color = Color(0xFFBCAEC7), fontSize = 11.sp, modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 2.dp), textAlign = TextAlign.Center)
         Row(Modifier.fillMaxWidth().padding(horizontal = 10.dp), horizontalArrangement = Arrangement.spacedBy(7.dp), verticalAlignment = Alignment.CenterVertically) {
             EvilButton("☄ توان آتش ${if (snapshot.abilityRemaining > 0) fa(snapshot.abilityRemaining.toInt()) else "آماده"}", Modifier.weight(1f), Color(0xFF9E3C3A), enabled = snapshot.abilityRemaining <= 0f) { vm.inferno() }
             Text("کشتار: ${fa(snapshot.enemiesDefeated)}  •  زنجیره: ${fa(snapshot.combo)}", color = Color(0xFFBCAEC7), fontSize = 12.sp, modifier = Modifier.weight(1.3f), textAlign = TextAlign.Center)
@@ -115,6 +118,7 @@ private fun TowerUpgradePanel(tower: Tower, snapshot: GameSnapshot, vm: GameView
             Text(tower.type.title, color = tower.type.color, fontWeight = FontWeight.Bold)
             Text("سطح ${fa(tower.level)} / ${fa(100)}  •  آسیب ${fa(Balance.towerDamage(tower).toInt())}", color = Color(0xFFE8DDF0), fontSize = 12.sp)
             Text("برد ${fa((Balance.towerRange(tower) * 100).toInt())}%  •  سرعت ${fa(Balance.towerInterval(tower).format1())}", color = Color(0xFFBCAEC7), fontSize = 11.sp)
+            if (tower.webbed > 0f) Text("در تار عنکبوت گیر افتاده: ${fa(tower.webbed.toInt())}", color = Color(0xFFFF9ACB), fontSize = 11.sp)
         }
         EvilButton(if (maxed) "کامل" else "ارتقا\n${fa(cost)}", Modifier.width(92.dp), tower.type.color, enabled = !maxed && snapshot.gold >= cost) { vm.upgrade() }
         EvilButton("فروش", Modifier.width(65.dp), Color(0xFF573044)) { vm.sell() }
