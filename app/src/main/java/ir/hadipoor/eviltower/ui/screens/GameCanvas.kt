@@ -154,7 +154,7 @@ private fun DrawScope.drawPlots(snapshot: GameSnapshot) {
             line(center.copy(x = center.x - 7), center.copy(x = center.x + 7), Color(0xFFB9A4B7), 2f)
             line(center.copy(y = center.y - 7), center.copy(y = center.y + 7), Color(0xFFB9A4B7), 2f)
         } else {
-            drawTower(tower, center, snapshot.worldTime)
+            drawTower(tower, center, snapshot.worldTime, snapshot.skin)
             if (tower.webbed > 0f) {
                 drawCircle(Color(0x99FFC1E3), 23f, center, style = Stroke(2f))
                 line(center + Offset(-16f, -16f), center + Offset(16f, 16f), Color(0x99FFC1E3), 1.5f)
@@ -164,10 +164,15 @@ private fun DrawScope.drawPlots(snapshot: GameSnapshot) {
     }
 }
 
-private fun DrawScope.drawTower(tower: Tower, center: Offset, time: Float) {
+private fun DrawScope.drawTower(tower: Tower, center: Offset, time: Float, skin: Int) {
     val tier = (tower.level - 1) / 10
     val detail = (tower.level - 1) % 10
-    val color = tower.type.color
+    val color = if (skin == 1) when (tower.type) {
+        TowerType.FROST -> Color(0xFFB7F2FF)
+        TowerType.ARCANE -> Color(0xFFFFA6E8)
+        TowerType.LIGHTNING -> Color(0xFFFFC857)
+        else -> Color(0xFFFF8C69)
+    } else tower.type.color
     val pulse = 1f + (tower.upgradePulse * .16f)
     val sway = SpriteAnimation.sample(SpriteState.IDLE, time, tower.id).tilt * 2f
     drawCircle(color.copy(alpha = .10f + tier * .012f), (23f + tier * 2f) * pulse, center)

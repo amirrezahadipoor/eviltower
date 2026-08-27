@@ -51,6 +51,7 @@ class GameEngine(private val random: Random = Random(77)) {
     private var screenShake = 0f
     private var arcaneUnlocked = false
     private var lowGraphics = false
+    private var skin = 0
     private val towers = mutableListOf<Tower>()
     private val enemies = mutableListOf<Enemy>()
     private val projectiles = mutableListOf<Projectile>()
@@ -60,13 +61,13 @@ class GameEngine(private val random: Random = Random(77)) {
     private val projectilePool = ObjectPool<Projectile>(factory = { Projectile(0, TowerType.ARCHER, Point(0f, 0f), Point(0f, 0f)) }, initialSize = 24)
     private val enemyPool = ObjectPool<Enemy>(factory = { Enemy(0, EnemyType.GRUNT, 0f, 0f, 1f, false) }, initialSize = 64)
 
-    fun startRun(startingGold: Int = 520, personalBest: Int = 0, arcane: Boolean = false, lowGraphics: Boolean = false) {
+    fun startRun(startingGold: Int = 520, personalBest: Int = 0, arcane: Boolean = false, lowGraphics: Boolean = false, skin: Int = 0) {
         phase = EnginePhase.PREP; wave = 1; bestWave = personalBest; startingBest = personalBest
         gold = startingGold; gems = 0; coreHp = Balance.MAX_CORE_HP
         enemiesDefeated = 0; bossesDefeated = 0; goldEarned = 0; elapsed = 0f
         prepRemaining = Balance.PREP_SECONDS; spawnTimer = 0f; spawned = 0; combo = 0; nextId = 1
         selectedPlot = null; currentPlan = null; message = null; messageTimer = 0f
-        abilityCooldown = 0f; bossAttackCooldown = 7f; bossTelegraph = 0f; hitStop = 0f; screenShake = 0f; arcaneUnlocked = arcane; this.lowGraphics = lowGraphics
+        abilityCooldown = 0f; bossAttackCooldown = 7f; bossTelegraph = 0f; hitStop = 0f; screenShake = 0f; arcaneUnlocked = arcane; this.lowGraphics = lowGraphics; this.skin = skin
         particles.forEach(particlePool::recycle)
         enemies.forEach(enemyPool::recycle)
         projectiles.forEach(projectilePool::recycle)
@@ -373,7 +374,7 @@ class GameEngine(private val random: Random = Random(77)) {
             towers = towers.toList(), enemies = enemies.toList(), projectiles = projectiles.toList(),
             floatingTexts = floatingTexts.toList(), particles = particles.toList(), combo = combo,
             message = message.takeIf { messageTimer > 0f },
-            newRecord = bestWave > startingBest,
+            newRecord = bestWave > startingBest, skin = skin,
         )
     }
 

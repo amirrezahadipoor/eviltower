@@ -26,6 +26,7 @@ data class ProfileData(
     val towerLevel100: Boolean = false,
     val history: List<RunRecord> = emptyList(),
     val arcaneUnlocked: Boolean = false,
+    val emberSkinUnlocked: Boolean = false,
     val startingGoldBonus: Int = 0,
     val soundOn: Boolean = true,
     val musicOn: Boolean = true,
@@ -45,6 +46,7 @@ class GameRepository(private val context: Context) {
         val towerLevel100 = booleanPreferencesKey("tower_level_100")
         val history = stringPreferencesKey("history")
         val arcane = booleanPreferencesKey("arcane_unlocked")
+        val emberSkin = booleanPreferencesKey("ember_skin_unlocked")
         val goldBonus = intPreferencesKey("starting_gold_bonus")
         val sound = booleanPreferencesKey("sound_on")
         val music = booleanPreferencesKey("music_on")
@@ -64,6 +66,7 @@ class GameRepository(private val context: Context) {
             towerLevel100 = p[K.towerLevel100] ?: false,
             history = decode(p[K.history].orEmpty()),
             arcaneUnlocked = p[K.arcane] ?: false,
+            emberSkinUnlocked = p[K.emberSkin] ?: false,
             startingGoldBonus = p[K.goldBonus] ?: 0,
             soundOn = p[K.sound] ?: true,
             musicOn = p[K.music] ?: true,
@@ -92,6 +95,7 @@ class GameRepository(private val context: Context) {
 
     suspend fun buyArcane() { context.profileStore.edit { p -> if ((p[K.coins] ?: 0) >= 850) { p[K.coins] = (p[K.coins] ?: 0) - 850; p[K.arcane] = true } } }
     suspend fun buyStartingGold() { context.profileStore.edit { p -> if ((p[K.coins] ?: 0) >= 500) { p[K.coins] = (p[K.coins] ?: 0) - 500; p[K.goldBonus] = (p[K.goldBonus] ?: 0) + 80 } } }
+    suspend fun buyEmberSkin() { context.profileStore.edit { p -> if ((p[K.coins] ?: 0) >= 400 && !(p[K.emberSkin] ?: false)) { p[K.coins] = (p[K.coins] ?: 0) - 400; p[K.emberSkin] = true } } }
     suspend fun setSound(value: Boolean) { context.profileStore.edit { it[K.sound] = value } }
     suspend fun setMusic(value: Boolean) { context.profileStore.edit { it[K.music] = value } }
     suspend fun setSoundVolume(value: Float) { context.profileStore.edit { it[K.soundVolume] = value.coerceIn(0f, 1f) } }

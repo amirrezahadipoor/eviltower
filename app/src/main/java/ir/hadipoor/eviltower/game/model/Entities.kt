@@ -122,4 +122,5 @@ data class GameSnapshot(
     val combo: Int = 0,
     val message: String? = null,
     val newRecord: Boolean = false,
+    val skin: Int = 0,
 )

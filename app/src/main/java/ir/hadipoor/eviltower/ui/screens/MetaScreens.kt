@@ -71,6 +71,14 @@ fun ShopScreen(profile: ProfileData, vm: GameViewModel) = MetaFrame("فروشگ�
     Spacer(Modifier.height(12.dp))
     StoneCard(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text("پوسته‌ی شراره", color = Color(0xFFFF8C69), fontSize = 19.sp, fontWeight = FontWeight.Bold)
+            Text("رنگ شعله‌ای برای همه‌ی برج‌ها؛ در هر دفاع فعال می‌شود.", color = Color(0xFFD0C2D8))
+            EvilButton(if (profile.emberSkinUnlocked) "فعال" else "باز کردن — ${fa(400)} سکه", Modifier.fillMaxWidth(), Color(0xFF9A4A38), enabled = !profile.emberSkinUnlocked && profile.metaCoins >= 400) { vm.buyEmberSkin() }
+        }
+    }
+    Spacer(Modifier.height(12.dp))
+    StoneCard(Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text("کیسه‌ی شروع", color = Gold, fontSize = 19.sp, fontWeight = FontWeight.Bold)
             Text("در هر دفاع ۸۰ سکه‌ی اولیه‌ی بیشتر دریافت کن. خریدها دائمی هستند.", color = Color(0xFFD0C2D8))
             EvilButton("خرید ۵۰۰ سکه — سطح فعلی ${fa(profile.startingGoldBonus / 80)}", Modifier.fillMaxWidth(), Color(0xFF805B31), enabled = profile.metaCoins >= 500) { vm.buyGoldBonus() }

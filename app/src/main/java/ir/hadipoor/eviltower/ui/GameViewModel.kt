@@ -47,7 +47,7 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
 
     fun startRun() {
         val p = profile.value
-        engine.startRun(startingGold = 520 + p.startingGoldBonus, personalBest = p.bestWave, arcane = p.arcaneUnlocked, lowGraphics = p.lowGraphics)
+        engine.startRun(startingGold = 520 + p.startingGoldBonus, personalBest = p.bestWave, arcane = p.arcaneUnlocked, lowGraphics = p.lowGraphics, skin = if (p.emberSkinUnlocked) 1 else 0)
         snapshot.value = engine.snapshot()
         didSave = false
         screen.value = AppScreen.GAME
@@ -95,6 +95,7 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
 
     fun buyArcane() { viewModelScope.launch { repository.buyArcane(); notice.value = "برج جادوی اهریمنی باز شد" } }
     fun buyGoldBonus() { viewModelScope.launch { repository.buyStartingGold(); notice.value = "۸۰ سکه‌ی شروع اضافه شد" } }
+    fun buyEmberSkin() { viewModelScope.launch { repository.buyEmberSkin(); notice.value = "پوسته‌ی شراره باز شد" } }
     fun setSound(value: Boolean) {
         audio.setSoundVolume(if (value) profile.value.soundVolume else 0f)
         viewModelScope.launch { repository.setSound(value) }
