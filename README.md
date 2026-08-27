@@ -98,7 +98,7 @@ app/src/main/java/ir/hadipoor/eviltower/
 پیاده‌سازی‌شده: نقشه‌ی پویا و برج شیطانی glowing، مه متحرک، جاده و ۱۲ plot، enemy bob و stealth،
 HP bar، arrow/fire/ice/cannon/arcane projectile، lightning chain، hit flash، damage number،
 ذرات مرگ و ارتقا، combo، health bar و phase باس، هشدار باس، countdown، range indicator،
-توان آتش با cooldown، لرزش دوربین، pinch-to-zoom/pan، دکمه‌ی bounce، رنگ‌بندی تاریک، فونت
+توان آتش و سپر هسته با cooldown، telegraph ضربه‌ی باس، لرزش دوربین، pinch-to-zoom/pan، دکمه‌ی bounce، رنگ‌بندی تاریک، فونت
 Vazirmatn محلی و RTL. ذرات با pool بازیافت می‌شوند تا در فاز بی‌پایان فشار حافظه کنترل شود.
 موسیقی زمینه‌ی loop و ۱۴ SFX با `tools/generate_audio.py` رویه‌ای و بدون فایل شخص ثالث ساخته می‌شوند.
 
@@ -144,7 +144,7 @@ Bazaar مناسب نیست و باید با کلید مالک برنامه ام�
 - [ ] کمبود طلا ساخت/ارتقا را غیرفعال می‌کند؛ فروش طلا را برمی‌گرداند.
 - [ ] همه‌ی شش برج پایه قابلیت هدف‌گیری دارند و خفاش فقط از کماندار آسمان آسیب می‌گیرد.
 - [ ] موج ۵ مینی‌باس، موج ۱۰ باس و نوار جان/هشدار آن‌ها بررسی شود.
-- [ ] توان آتش cooldown دارد و damage number/particle/combo دیده می‌شود.
+- [ ] توان آتش و سپر هسته cooldown دارند؛ حلقه‌ی سپر، damage number، particle و combo دیده می‌شود.
 - [ ] توقف، ادامه، شروع دوباره و خروج به منو درست کار می‌کند.
 - [ ] پایان دور نتیجه، رکورد جدید، دوباره تلاش و منوی اصلی را نشان می‌دهد.
 - [ ] فروشگاه، بازکردن برج اهریمنی، پوسته‌ی شراره و پاداش شروع پس از restart برنامه باقی می‌ماند.
