@@ -66,10 +66,12 @@ app/src/main/java/ir/hadipoor/eviltower/
 
 ارتقای هر برج:
 
-- هزینه: `baseCost × 1.09^(level-1)`
-- آسیب: `baseDamage × (1 + 0.105 × (level-1))`
-- برد: `baseRange × (1 + 0.008 × (level-1))`
-- فاصله‌ی شلیک: `baseInterval × 0.994^(level-1)` با کف ۰٫۱۶ ثانیه
+- هزینه: `baseCost × 1.017^(level-1)`
+- آسیب: `baseDamage × 1.075^(level-1)`
+- برد: `baseRange × (1 + 0.006 × (level-1))`
+- فاصله‌ی شلیک: `baseInterval × 0.992^(level-1)` با کف ۰٫۱۸ ثانیه
+- مقاومت اسکلت ۳۲٪ و نامرئی‌بودن شبح ۴۵٪ کاهش آسیب غیر Arcane دارد؛ Arcane این دو را نادیده می‌گیرد.
+- توپخانه تا پنج هدف نزدیک را splash می‌کند، رعد تا سه زنجیره می‌سازد و عنکبوت برج را ۲٫۵ ثانیه web می‌کند.
 - سطح ۱ تا ۱۰۰؛ در هر ۱۰ سطح یک silhouette/SVG tier و در هر سطح glow، جزئیات و burst جدید.
 
 `tools/balance_simulation.py` همان ضرایب را در چند نقطه‌ی موج چاپ می‌کند تا نسبت فشار مجاور،
