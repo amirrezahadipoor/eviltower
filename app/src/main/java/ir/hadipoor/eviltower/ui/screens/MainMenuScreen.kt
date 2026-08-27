@@ -43,7 +43,14 @@ fun MainMenuScreen(profile: ProfileData, vm: GameViewModel, onExit: () -> Unit) 
             Spacer(Modifier.height(10.dp))
             Text("برج شیطانی", color = Gold, fontSize = 38.sp, fontWeight = FontWeight.Black)
             Text("دفاع از هسته در برابر موج‌های بی‌پایان", color = Color(0xFFD0C2D8), fontSize = 14.sp, textAlign = TextAlign.Center)
-            Spacer(Modifier.height(20.dp))
+            Canvas(Modifier.fillMaxWidth().height(180.dp)) {
+                val c = androidx.compose.ui.geometry.Offset(size.width / 2f, size.height * .62f)
+                drawCircle(Color(0x335CA58A), 82f, c); drawCircle(Color(0x445CA58A), 52f, c)
+                val tower = androidx.compose.ui.graphics.Path().apply { moveTo(c.x - 56, c.y + 65); lineTo(c.x - 40, c.y - 48); lineTo(c.x, c.y - 82); lineTo(c.x + 40, c.y - 48); lineTo(c.x + 56, c.y + 65); close() }
+                drawPath(tower, Color(0xFF442544)); drawPath(tower, Ember, style = androidx.compose.ui.graphics.drawscope.Stroke(3f))
+                drawCircle(Ember, 22f, c.copy(y = c.y - 6)); drawCircle(Color(0xFFFFEBD6), 5f, c.copy(y = c.y - 6))
+            }
+            Spacer(Modifier.height(4.dp))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)) {
                 StatPill("رکورد", fa(profile.bestWave), Gold)
                 StatPill("سکه", fa(profile.metaCoins), Gold)
