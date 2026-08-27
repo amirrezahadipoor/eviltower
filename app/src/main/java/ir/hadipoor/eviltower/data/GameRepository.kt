@@ -213,7 +213,9 @@ class GameRepository(private val context: Context) {
 
     // ---------------------------------------------------------------- helpers
 
-    private suspend fun edit(block: (androidx.datastore.preferences.core.MutablePreferences) -> Unit) {
+    private suspend fun edit(
+        block: suspend (androidx.datastore.preferences.core.MutablePreferences) -> Unit,
+    ) {
         context.dataStore.edit(block)
     }
 
