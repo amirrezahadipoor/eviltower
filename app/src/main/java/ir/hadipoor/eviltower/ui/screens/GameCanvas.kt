@@ -55,6 +55,7 @@ fun GameCanvas(snapshot: GameSnapshot, onPlotTap: (Int) -> Unit, modifier: Modif
         drawFog(snapshot.wave, snapshot.worldTime)
         drawTowerSource(snapshot.wave, snapshot.worldTime)
         drawRoad()
+        drawTorches(snapshot.worldTime)
         drawCore(snapshot.worldTime, snapshot.bossTelegraph)
         drawPlots(snapshot)
         drawEnemies(snapshot)
@@ -109,6 +110,17 @@ private fun DrawScope.drawRoad() {
         line(points[i], points[i + 1], Color(0xFF73555A), 22f, StrokeCap.Round)
     }
     points.forEach { drawCircle(Color(0x226B4F5A), 18f, it) }
+}
+
+private fun DrawScope.drawTorches(time: Float) {
+    val torches = listOf(.77f to .10f, .61f to .27f, .30f to .23f, .20f to .53f, .52f to .67f, .76f to .83f)
+    torches.forEachIndexed { index, (x, y) ->
+        val p = pos(x, y); val flicker = 1f + sin(time * 8f + index) * .16f
+        drawCircle(Color(0x33FF754C), 18f * flicker, p)
+        line(p.copy(y = p.y + 8f), p.copy(y = p.y + 22f), Color(0xFF7D5B4E), 4f)
+        drawCircle(Color(0xFFFFB347), 5f * flicker, p.copy(y = p.y - 3f))
+        drawCircle(Color(0xFFFFE5A5), 2f, p.copy(y = p.y - 4f))
+    }
 }
 
 private fun DrawScope.drawCore(time: Float, telegraph: Float) {
@@ -213,6 +225,7 @@ private fun DrawScope.drawProjectiles(snapshot: GameSnapshot) {
     snapshot.projectiles.forEach { projectile ->
         val p = Point(projectile.from.x + (projectile.to.x - projectile.from.x) * projectile.progress, projectile.from.y + (projectile.to.y - projectile.from.y) * projectile.progress)
         val screen = pos(p); val color = projectile.towerType.color
+        line(pos(projectile.from), screen, color.copy(alpha = .28f), 2.5f, StrokeCap.Round)
         drawCircle(color.copy(alpha = .18f), 12f, screen)
         when (projectile.towerType) {
             TowerType.LIGHTNING -> {
