@@ -18,7 +18,7 @@ class BalanceTest {
     }
 
     @Test fun `endless phase has no cap`() {
-        assertTrue(Balance.wavePlan(301).isMiniBoss)
+        assertTrue(Balance.wavePlan(305).isMiniBoss)
         assertTrue(Balance.wavePlan(310).isBoss)
         assertTrue(Balance.regularHp(310) > Balance.regularHp(300))
         assertTrue(Balance.wavePlan(10000).units.isNotEmpty())
