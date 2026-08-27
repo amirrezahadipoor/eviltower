@@ -56,6 +56,10 @@ android {
                 storePassword = storePasswordValue
                 keyAlias = keyAliasValue
                 keyPassword = keyPasswordValue
+                // Cafe Bazaar verifies uploaded APKs: ship v1 + v2 + v3 signatures.
+                enableV1Signing = true
+                enableV2Signing = true
+                enableV3Signing = true
             }
         }
     }
