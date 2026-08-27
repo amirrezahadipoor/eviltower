@@ -75,7 +75,7 @@ fun AchievementsScreen(profile: ProfileData, vm: GameViewModel) = MetaFrame("د�
     val list = listOf(
         Triple("رسیدن به موج ۵۰", profile.bestWave >= 50, "بهترین موج: ${fa(profile.bestWave)}"),
         Triple("دفاع جاودانه", profile.bestWave >= 300, "ورود به فاز بی‌پایان"),
-        Triple("یک برج سطح ۱۰۰", false, "در یک دور، یک برج را تا آخر ارتقا بده"),
+        Triple("یک برج سطح ۱۰۰", profile.towerLevel100, "در یک دور، یک برج را تا آخر ارتقا بده"),
         Triple("شکارچی باس‌ها", profile.totalBosses >= 100, "شکست ${fa(profile.totalBosses)} باس"),
         Triple("صدای هسته", profile.totalEnemies >= 1000, "شکست ${fa(profile.totalEnemies)} دشمن"),
     )

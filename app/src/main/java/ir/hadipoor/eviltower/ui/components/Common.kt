@@ -1,5 +1,6 @@
 package ir.hadipoor.eviltower.ui.components
 
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,9 +17,15 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -35,14 +42,17 @@ fun StoneCard(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
 
 @Composable
 fun EvilButton(text: String, modifier: Modifier = Modifier, color: Color = Ember, enabled: Boolean = true, onClick: () -> Unit) {
+    var bounce by remember { mutableStateOf(false) }
+    val scale by animateFloatAsState(if (bounce) .95f else 1f, label = "button-bounce")
+    LaunchedEffect(bounce) { if (bounce) { kotlinx.coroutines.delay(110); bounce = false } }
     Button(
-        onClick = onClick, enabled = enabled, modifier = modifier.height(52.dp),
+        onClick = { bounce = true; onClick() }, enabled = enabled,
+        modifier = modifier.height(52.dp).graphicsLayer { scaleX = scale; scaleY = scale },
         shape = RoundedCornerShape(15.dp), colors = ButtonDefaults.buttonColors(containerColor = color, disabledContainerColor = PanelLight),
     ) { Text(text, fontWeight = FontWeight.Bold, fontSize = 16.sp, textAlign = TextAlign.Center) }
 }
 
-@Composable
-fun BackButton(onClick: () -> Unit) { EvilButton("بازگشت", Modifier.fillMaxWidth(), PanelLight, onClick = onClick) }
+@Composable fun BackButton(onClick: () -> Unit) { EvilButton("بازگشت", Modifier.fillMaxWidth(), PanelLight, onClick = onClick) }
 
 @Composable
 fun ScreenTitle(title: String, subtitle: String? = null) {

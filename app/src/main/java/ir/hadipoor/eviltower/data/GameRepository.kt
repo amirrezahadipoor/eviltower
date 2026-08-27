@@ -22,6 +22,7 @@ data class ProfileData(
     val bestWave: Int = 0,
     val totalEnemies: Int = 0,
     val totalBosses: Int = 0,
+    val towerLevel100: Boolean = false,
     val history: List<RunRecord> = emptyList(),
     val arcaneUnlocked: Boolean = false,
     val startingGoldBonus: Int = 0,
@@ -38,6 +39,7 @@ class GameRepository(private val context: Context) {
         val best = intPreferencesKey("best_wave")
         val enemies = intPreferencesKey("total_enemies")
         val bosses = intPreferencesKey("total_bosses")
+        val towerLevel100 = booleanPreferencesKey("tower_level_100")
         val history = stringPreferencesKey("history")
         val arcane = booleanPreferencesKey("arcane_unlocked")
         val goldBonus = intPreferencesKey("starting_gold_bonus")
@@ -54,6 +56,7 @@ class GameRepository(private val context: Context) {
             bestWave = p[K.best] ?: 0,
             totalEnemies = p[K.enemies] ?: 0,
             totalBosses = p[K.bosses] ?: 0,
+            towerLevel100 = p[K.towerLevel100] ?: false,
             history = decode(p[K.history].orEmpty()),
             arcaneUnlocked = p[K.arcane] ?: false,
             startingGoldBonus = p[K.goldBonus] ?: 0,
@@ -71,6 +74,7 @@ class GameRepository(private val context: Context) {
             p[K.best] = newBest
             p[K.enemies] = (p[K.enemies] ?: 0) + snapshot.enemiesDefeated
             p[K.bosses] = (p[K.bosses] ?: 0) + snapshot.wave / 10
+            if (snapshot.towers.any { it.level >= 100 }) p[K.towerLevel100] = true
             p[K.coins] = (p[K.coins] ?: 0) + (snapshot.goldEarned * .40f).toInt()
             p[K.gems] = (p[K.gems] ?: 40) + snapshot.gems
             val records = decode(p[K.history].orEmpty()).toMutableList()
