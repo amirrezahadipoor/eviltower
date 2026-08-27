@@ -44,6 +44,7 @@ class GameEngine(private val random: Random = Random(77)) {
     private val projectiles = mutableListOf<Projectile>()
     private val floatingTexts = mutableListOf<FloatingText>()
     private val particles = mutableListOf<Particle>()
+    private val particlePool = ObjectPool { Particle(0, Point(0f, 0f), Color.White) }
 
     fun startRun(startingGold: Int = 520, personalBest: Int = 0, arcane: Boolean = false) {
         phase = EnginePhase.PREP
