@@ -173,6 +173,7 @@ fun GameScreen(
                 }
                 frame++
             }
+            if (engine.phase == RunPhase.PLAYING) clock.finishReported = false
             if (!clock.finishReported &&
                 (engine.phase == RunPhase.GAME_OVER || engine.phase == RunPhase.VICTORY)
             ) {
@@ -212,10 +213,8 @@ fun GameScreen(
                     }
                 }
                 .pointerInput(settings.controlScheme) {
-                    detectTapGestures(
-                        onTap = { input.attack = true },
-                        onDoubleTap = { input.jump = true },
-                    )
+                    // no double-tap handler: taps must fire instantly (attack latency matters)
+                    detectTapGestures(onTap = { input.attack = true })
                 },
         ) {
             @Suppress("UNUSED_EXPRESSION")

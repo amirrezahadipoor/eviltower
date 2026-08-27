@@ -13,7 +13,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import ir.hadipoor.eviltower.data.RunResult
-import ir.hadipoor.eviltower.game.model.RunPhase
 import ir.hadipoor.eviltower.monetization.AdManager
 import ir.hadipoor.eviltower.monetization.AdPlacement
 import ir.hadipoor.eviltower.monetization.BillingCatalog
@@ -70,7 +69,7 @@ fun EvilTowerApp(viewModel: GameViewModel, tiltX: State<Float>) {
                         androidx.compose.runtime.LaunchedEffect(Unit) { screen = Screen.MENU }
                     } else {
                         val result: RunResult? = viewModel.lastResult
-                        val finished = engine.phase == RunPhase.GAME_OVER || engine.phase == RunPhase.VICTORY
+                        val finished = viewModel.runFinished
                         GameScreen(
                             engine = engine,
                             profile = profile,

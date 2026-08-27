@@ -60,6 +60,10 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     var adRewardUsedThisRun by mutableStateOf(false)
         private set
 
+    /** Compose-observable mirror of the engine phase: true once the run is over. */
+    var runFinished by mutableStateOf(false)
+        private set
+
     private var runSaved = false
 
     init {
@@ -83,6 +87,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         }
         runSaved = false
         adRewardUsedThisRun = false
+        runFinished = false
         lastResult = null
         freshAchievements = emptyList()
         engine = GameEngine(
@@ -96,6 +101,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     fun quitRun() {
         engine = null
+        runFinished = false
     }
 
     /** Called once by the game loop when the engine reports GAME_OVER / VICTORY. */
@@ -103,6 +109,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         if (runSaved) return
         val e = engine ?: return
         runSaved = true
+        runFinished = true
         viewModelScope.launch {
             val result = repository.saveRun(
                 floorsClimbed = e.highestFloor,
@@ -136,6 +143,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         val e = engine ?: return
         adRewardUsedThisRun = true
         runSaved = false
+        runFinished = false
         lastResult = null
         e.revive()
     }
