@@ -18,3 +18,8 @@ build/
 keystore.properties
 !keystore.properties.example
 release/
+
+# APK outputs are workflow artifacts, not source
+artifacts/
+evil-tower-debug.apk
+evil-tower-release.apk
