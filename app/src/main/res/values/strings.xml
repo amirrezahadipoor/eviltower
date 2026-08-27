@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Default (Persian / فارسی) strings. English overrides live in values-en/strings.xml -->
+<resources>
+    <string name="app_name">برج شیطانی</string>
+</resources>

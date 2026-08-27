@@ -1,0 +1,20 @@
+*.iml
+.gradle/
+/local.properties
+/.idea/
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+app/build/
+build/
+*.log
+
+# --- Signing material: NEVER commit real keystores or passwords ---
+*.jks
+*.keystore
+keystore.properties
+!keystore.properties.example
+release/
