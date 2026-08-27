@@ -36,6 +36,8 @@ import ir.hadipoor.eviltower.data.SkinEntry
 import ir.hadipoor.eviltower.data.ThemeEntry
 import ir.hadipoor.eviltower.data.UpgradeEntry
 import ir.hadipoor.eviltower.game.render.RenderStyles
+import ir.hadipoor.eviltower.game.render.SvgPaths
+import ir.hadipoor.eviltower.game.render.drawSvg
 import ir.hadipoor.eviltower.ui.LocalStrings
 import ir.hadipoor.eviltower.ui.components.CoinIcon
 import ir.hadipoor.eviltower.ui.components.CurrencyChip
@@ -264,20 +266,20 @@ private fun SkinPreview(skin: SkinEntry) {
     androidx.compose.foundation.Canvas(Modifier.size(44.dp)) {
         val w = size.width
         val h = size.height
-        ir.hadipoor.eviltower.game.render.drawSvg(
-            ir.hadipoor.eviltower.game.render.SvgPaths.HERO_CAPE, w * 0.1f, h * 0.2f, w * 0.8f, h * 0.7f, style.cape,
+        drawSvg(
+            SvgPaths.HERO_CAPE, w * 0.1f, h * 0.2f, w * 0.8f, h * 0.7f, style.cape,
         )
-        ir.hadipoor.eviltower.game.render.drawSvg(
-            ir.hadipoor.eviltower.game.render.SvgPaths.HERO_TORSO, w * 0.15f, h * 0.25f, w * 0.7f, h * 0.6f, style.armor,
+        drawSvg(
+            SvgPaths.HERO_TORSO, w * 0.15f, h * 0.25f, w * 0.7f, h * 0.6f, style.armor,
         )
-        ir.hadipoor.eviltower.game.render.drawSvg(
-            ir.hadipoor.eviltower.game.render.SvgPaths.HERO_HEAD, w * 0.22f, h * 0.05f, w * 0.56f, h * 0.4f, style.armor,
+        drawSvg(
+            SvgPaths.HERO_HEAD, w * 0.22f, h * 0.05f, w * 0.56f, h * 0.4f, style.armor,
         )
-        ir.hadipoor.eviltower.game.render.drawSvg(
-            ir.hadipoor.eviltower.game.render.SvgPaths.HERO_VISOR, w * 0.22f, h * 0.05f, w * 0.56f, h * 0.4f, style.visor,
+        drawSvg(
+            SvgPaths.HERO_VISOR, w * 0.22f, h * 0.05f, w * 0.56f, h * 0.4f, style.visor,
         )
-        ir.hadipoor.eviltower.game.render.drawSvg(
-            ir.hadipoor.eviltower.game.render.SvgPaths.HERO_HELMET_CREST, w * 0.22f, h * 0.02f, w * 0.56f, h * 0.4f, style.trim,
+        drawSvg(
+            SvgPaths.HERO_HELMET_CREST, w * 0.22f, h * 0.02f, w * 0.56f, h * 0.4f, style.trim,
         )
     }
 }
@@ -296,11 +298,11 @@ private fun ThemePreview(theme: ThemeEntry) {
 @Composable
 private fun UpgradePreview(upgrade: UpgradeEntry, level: Int) {
     val path = when (upgrade.id) {
-        "extra_heart" -> ir.hadipoor.eviltower.game.render.SvgPaths.HEART_BODY
-        "start_shield" -> ir.hadipoor.eviltower.game.render.SvgPaths.SHIELD_BODY
-        "coin_insurance" -> ir.hadipoor.eviltower.game.render.SvgPaths.COIN_BODY
-        "coin_bonus" -> ir.hadipoor.eviltower.game.render.SvgPaths.GEM_BODY
-        else -> ir.hadipoor.eviltower.game.render.SvgPaths.WINGS_BODY
+        "extra_heart" -> SvgPaths.HEART_BODY
+        "start_shield" -> SvgPaths.SHIELD_BODY
+        "coin_insurance" -> SvgPaths.COIN_BODY
+        "coin_bonus" -> SvgPaths.GEM_BODY
+        else -> SvgPaths.WINGS_BODY
     }
     val color = when (upgrade.id) {
         "extra_heart" -> TowerPalette.Blood
@@ -310,6 +312,6 @@ private fun UpgradePreview(upgrade: UpgradeEntry, level: Int) {
         else -> TowerPalette.Bone
     }
     androidx.compose.foundation.Canvas(Modifier.size(34.dp)) {
-        ir.hadipoor.eviltower.game.render.drawSvg(path, 0f, 0f, size.width, size.height, color)
+        drawSvg(path, 0f, 0f, size.width, size.height, color)
     }
 }
