@@ -49,6 +49,7 @@ class GameEngine(private val random: Random = Random(77)) {
     private var hitStop = 0f
     private var screenShake = 0f
     private var arcaneUnlocked = false
+    private var lowGraphics = false
     private val towers = mutableListOf<Tower>()
     private val enemies = mutableListOf<Enemy>()
     private val projectiles = mutableListOf<Projectile>()
@@ -58,13 +59,13 @@ class GameEngine(private val random: Random = Random(77)) {
     private val projectilePool = ObjectPool<Projectile>(factory = { Projectile(0, TowerType.ARCHER, Point(0f, 0f), Point(0f, 0f)) }, initialSize = 24)
     private val enemyPool = ObjectPool<Enemy>(factory = { Enemy(0, EnemyType.GRUNT, 0f, 0f, 1f, false) }, initialSize = 64)
 
-    fun startRun(startingGold: Int = 520, personalBest: Int = 0, arcane: Boolean = false) {
+    fun startRun(startingGold: Int = 520, personalBest: Int = 0, arcane: Boolean = false, lowGraphics: Boolean = false) {
         phase = EnginePhase.PREP; wave = 1; bestWave = personalBest; startingBest = personalBest
         gold = startingGold; gems = 0; coreHp = Balance.MAX_CORE_HP
         enemiesDefeated = 0; goldEarned = 0; elapsed = 0f
         prepRemaining = Balance.PREP_SECONDS; spawnTimer = 0f; spawned = 0; combo = 0; nextId = 1
         selectedPlot = null; currentPlan = null; message = null; messageTimer = 0f
-        abilityCooldown = 0f; bossAttackCooldown = 7f; bossTelegraph = 0f; hitStop = 0f; screenShake = 0f; arcaneUnlocked = arcane
+        abilityCooldown = 0f; bossAttackCooldown = 7f; bossTelegraph = 0f; hitStop = 0f; screenShake = 0f; arcaneUnlocked = arcane; this.lowGraphics = lowGraphics
         particles.forEach(particlePool::recycle)
         enemies.forEach(enemyPool::recycle)
         projectiles.forEach(projectilePool::recycle)
@@ -345,7 +346,9 @@ class GameEngine(private val random: Random = Random(77)) {
 
     private fun addFloating(text: String, at: Point, color: Color) { floatingTexts += FloatingText(nextId++, text, at, color) }
     private fun addParticle(at: Point, color: Color, size: Float) { particles += particlePool.obtain().copy(id = nextId++, at = at, color = color, age = 0f, size = size) }
-    private fun addBurst(at: Point, color: Color, count: Int = 8) { repeat(count) { addParticle(at, color, .7f + random.nextFloat() * 1.2f) } }
+    private fun addBurst(at: Point, color: Color, count: Int = 8) {
+        repeat(if (lowGraphics) max(1, count / 2) else count) { addParticle(at, color, .7f + random.nextFloat() * 1.2f) }
+    }
 
     private fun positionOf(progress: Float): Point {
         val p = progress.coerceIn(0f, .9999f) * (Balance.PATH.size - 1)

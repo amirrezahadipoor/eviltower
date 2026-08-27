@@ -47,7 +47,7 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
 
     fun startRun() {
         val p = profile.value
-        engine.startRun(startingGold = 520 + p.startingGoldBonus, personalBest = p.bestWave, arcane = p.arcaneUnlocked)
+        engine.startRun(startingGold = 520 + p.startingGoldBonus, personalBest = p.bestWave, arcane = p.arcaneUnlocked, lowGraphics = p.lowGraphics)
         snapshot.value = engine.snapshot()
         didSave = false
         screen.value = AppScreen.GAME
