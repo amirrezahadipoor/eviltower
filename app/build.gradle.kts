@@ -41,6 +41,12 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { useSupportLibrary = true }
         resourceConfigurations += listOf("fa", "en")
+        // RSA public key of the Cafe Bazaar developer console (empty -> local security check off).
+        buildConfigField(
+            "String",
+            "BAZAAR_RSA_KEY",
+            "\"${System.getenv("BAZAAR_RSA_KEY") ?: ""}\"",
+        )
     }
 
     signingConfigs {
