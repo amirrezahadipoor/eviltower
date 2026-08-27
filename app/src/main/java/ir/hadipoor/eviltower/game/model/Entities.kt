@@ -97,6 +97,7 @@ data class GameSnapshot(
     val coreHp: Int = 20,
     val coreMaxHp: Int = 20,
     val enemiesDefeated: Int = 0,
+    val bossesDefeated: Int = 0,
     val goldEarned: Int = 0,
     val runSeconds: Int = 0,
     val prepRemaining: Float = 3f,

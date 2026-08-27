@@ -32,6 +32,7 @@ class GameEngine(private val random: Random = Random(77)) {
     private var gems = 0
     private var coreHp = Balance.MAX_CORE_HP
     private var enemiesDefeated = 0
+    private var bossesDefeated = 0
     private var goldEarned = 0
     private var elapsed = 0f
     private var prepRemaining = Balance.PREP_SECONDS
@@ -62,7 +63,7 @@ class GameEngine(private val random: Random = Random(77)) {
     fun startRun(startingGold: Int = 520, personalBest: Int = 0, arcane: Boolean = false, lowGraphics: Boolean = false) {
         phase = EnginePhase.PREP; wave = 1; bestWave = personalBest; startingBest = personalBest
         gold = startingGold; gems = 0; coreHp = Balance.MAX_CORE_HP
-        enemiesDefeated = 0; goldEarned = 0; elapsed = 0f
+        enemiesDefeated = 0; bossesDefeated = 0; goldEarned = 0; elapsed = 0f
         prepRemaining = Balance.PREP_SECONDS; spawnTimer = 0f; spawned = 0; combo = 0; nextId = 1
         selectedPlot = null; currentPlan = null; message = null; messageTimer = 0f
         abilityCooldown = 0f; bossAttackCooldown = 7f; bossTelegraph = 0f; hitStop = 0f; screenShake = 0f; arcaneUnlocked = arcane; this.lowGraphics = lowGraphics
@@ -314,6 +315,7 @@ class GameEngine(private val random: Random = Random(77)) {
     private fun onKill(enemy: Enemy) {
         val reward = Balance.enemyReward(enemy.type, wave)
         gold += reward; goldEarned += reward; enemiesDefeated++; combo++
+        if (enemy.type == EnemyType.BOSS) bossesDefeated++
         addFloating("+$reward", positionOf(enemy.progress), Color(0xFFFFD166))
         addBurst(positionOf(enemy.progress), when (enemy.type) {
             EnemyType.BAT, EnemyType.WRAITH -> Color(0xFFC19BFF)
@@ -362,7 +364,7 @@ class GameEngine(private val random: Random = Random(77)) {
         val boss = enemies.firstOrNull { it.type == EnemyType.BOSS || it.type == EnemyType.MINI_BOSS }
         return GameSnapshot(
             phase = phase, wave = wave, bestWave = bestWave, gold = gold, gems = gems, coreHp = coreHp,
-            enemiesDefeated = enemiesDefeated, goldEarned = goldEarned, runSeconds = elapsed.toInt(),
+            enemiesDefeated = enemiesDefeated, bossesDefeated = bossesDefeated, goldEarned = goldEarned, runSeconds = elapsed.toInt(),
             prepRemaining = prepRemaining.coerceAtLeast(0f), worldTime = elapsed, screenShake = screenShake,
             spawned = spawned, totalToSpawn = currentPlan?.units?.size ?: 0, isEndless = wave >= 301,
             bossName = boss?.bossName, bossHp = boss?.hp ?: 0f, bossMaxHp = boss?.maxHp ?: 0f,

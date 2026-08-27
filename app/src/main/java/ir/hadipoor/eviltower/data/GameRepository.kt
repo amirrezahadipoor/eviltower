@@ -80,7 +80,7 @@ class GameRepository(private val context: Context) {
             val newBest = maxOf(oldBest, snapshot.bestWave)
             p[K.best] = newBest
             p[K.enemies] = (p[K.enemies] ?: 0) + snapshot.enemiesDefeated
-            p[K.bosses] = (p[K.bosses] ?: 0) + snapshot.wave / 10
+            p[K.bosses] = (p[K.bosses] ?: 0) + snapshot.bossesDefeated
             if (snapshot.towers.any { it.level >= 100 }) p[K.towerLevel100] = true
             p[K.coins] = (p[K.coins] ?: 0) + (snapshot.goldEarned * .40f).toInt()
             p[K.gems] = (p[K.gems] ?: 40) + snapshot.gems

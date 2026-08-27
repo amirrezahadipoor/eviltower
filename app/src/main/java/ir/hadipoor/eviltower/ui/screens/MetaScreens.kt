@@ -151,6 +151,7 @@ fun ResultScreen(snapshot: GameSnapshot, profile: ProfileData, vm: GameViewModel
             ResultLine("موج طی‌شده", fa(snapshot.bestWave), Gold)
             ResultLine("بهترین رکورد", fa(profile.bestWave), Ember)
             ResultLine("دشمنان شکست‌خورده", fa(snapshot.enemiesDefeated), Color.White)
+            ResultLine("باس‌های شکست‌خورده", fa(snapshot.bossesDefeated), Ember)
             ResultLine("سکه‌ی به‌دست‌آمده", fa(snapshot.goldEarned), Gold)
             ResultLine("مدت دفاع", "${fa(snapshot.runSeconds)} ثانیه", Color.White)
         } }
